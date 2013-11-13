@@ -5,11 +5,13 @@ import time
 
 class Artist(models.Model):
     name = models.CharField(max_length=200)
-    label = models.CharField(max_length=200)
-    soundcloud_id = models.PositiveIntegerField()
-    
+    label = models.CharField(max_length=200, blank=True)
+    soundcloud_id = models.PositiveIntegerField(null=True,blank=True)
+    genres = models.ManyToManyField('Genre',null=True,blank=True)
+    ignore_sc = models.BooleanField('Ignore Soundcloud')
+
     def __unicode__(self):
-        return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + self.soundcloud_id + ' ]'
+        return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + str(self.soundcloud_id) + ' ]'
 '''
 TODO:
 -Read this:
@@ -20,7 +22,7 @@ TODO:
 -then check again
 '''
 class Genre(models.Model):
-    genre_name = models.CharField(max_length=200)
+    genre_name = models.CharField(max_length=200,unique=True)
     parent_id = models.ManyToManyField('self')
     
     def __unicode__(self):
@@ -32,7 +34,6 @@ Event Model
 TODO:
 -Add Field Options for enhanced treatmend in validation and backend, see:
     https://docs.djangoproject.com/en/dev/ref/models/fields/#field-options
--Finish image field :: DONE
 -Implement logic functions
 
 '''  
@@ -45,16 +46,17 @@ class Event(models.Model):
         return path
     
     event_name = models.CharField(max_length=200)
-    event_date = models.DateTimeField('datetime event starts')
+    event_date_start = models.DateTimeField('date and time event starts')
+    event_date_end = models.DateTimeField('date and time event ends')
     pub_date = models.DateTimeField('dateime event was added to database',auto_now_add=True)
     price = models.DecimalField(max_digits = 5, decimal_places = 2)
     description = models.TextField()
-    #This one needs a lot of work to be done see:
-    #https://docs.djangoproject.com/en/dev/topics/files/
     image = models.ImageField(upload_to =lambda self, fname:self.get_image_path(fname))
     #may need some more thinkin not sure right now
     artists = models.ManyToManyField(Artist)
-    genres = models.ManyToManyField(Genre)
+    #Moved to Artists because they determine the sound being played
+    #genres = models.ManyToManyField(Genre)
+    location = models.ForeignKey('Location')
     
     #could use some more love
     def __unicode__(self):
@@ -96,7 +98,7 @@ class Location(models.Model):
     image = models.ImageField(upload_to =lambda self, fname:self.get_image_path(fname))
     
     def __unicode__(self):
-        return 'Location[ ' + self.location_name + ', ' + self.location_date + ', coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
+        return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
 
 '''
 Name Abstraction Class will be used for machine learning
