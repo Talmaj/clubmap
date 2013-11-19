@@ -9,7 +9,7 @@ class EventAdmin(admin.ModelAdmin):
                         'fields': ('event_name', 'image', 'price', 'description', 'location', 'artists')
               }),
               ('Date Information', {
-                        'fields' : ('event_date_start', 'event_date_end')
+                        'fields':  ('event_date_start', 'event_date_end')
               }),             
     )
     
@@ -18,7 +18,17 @@ class EventAdmin(admin.ModelAdmin):
 class ArtistAdmin(admin.ModelAdmin):
     filter_horizontal = ('genres',)
     form = ScArtistAdminForm
-                
+    
+class LocationAdmin(admin.ModelAdmin):
+    fieldsets= (
+                ('General Information', {
+                            'fields' : ('location_name', 'street', 'postal_code', 'city', 'country_code', 'description', 'image', 'website' )
+                }),
+                ('Geocoding', {
+                        'fields': (('latitude', 'longitude'),)
+                })
+    )
     
 admin.site.register(Event,EventAdmin)
 admin.site.register(Artist, ArtistAdmin)
+admin.site.register(Location,LocationAdmin)

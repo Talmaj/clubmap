@@ -53,6 +53,8 @@ ROOT_URLCONF = 'clubmap.urls'
 
 WSGI_APPLICATION = 'clubmap.wsgi.application'
 
+MEDIA_ROOT = '/Users/Alan/Documents/clubmap/clubmap/media'
+MEDIA_URL = '/media/'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
