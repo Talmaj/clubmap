@@ -27,7 +27,7 @@ class ScArtistAdminForm(ModelForm):
             return self.cleaned_data
         
         ##check if a Field was left blank default is to use soundcloud
-        if not (False):
+        if not (self.cleaned_data['ignore_sc']):
             #retrieve missing data from sc
             try:
                 user = client.get('/users', q=self.cleaned_data['name'])
@@ -58,3 +58,4 @@ class ScArtistAdminForm(ModelForm):
                 )
         super(ScArtistAdminForm, self).clean()
         return self.cleaned_data
+##TODO add Location Admin Form
