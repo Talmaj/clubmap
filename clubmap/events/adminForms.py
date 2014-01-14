@@ -30,7 +30,7 @@ class ScArtistAdminForm(ModelForm):
         if not (self.cleaned_data['ignore_sc']):
             #retrieve missing data from sc
             try:
-                user = client.get('/users', q=self.cleaned_data['name'])
+                user = client.get('/users/jdshf/tracks', q=self.cleaned_data['name'])
                 #if user is not emtpy assign data
                 if(len(user)!=0):
                     user = user[0]
