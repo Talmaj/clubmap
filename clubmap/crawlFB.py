@@ -6,7 +6,7 @@ import clubmap.settings
 setup_environ(settings)
 '''
 #from events.models import Artist, Event, Location
-import facebook
+import facebook #pip install facebook-sdk
 import csv
 import re
 import datetime
@@ -25,8 +25,9 @@ with open('facebook_links_gefunden.csv') as csvfile:
             else:
                 locations.append(location.strip())
 
-graph = facebook.GraphAPI('CAADbpT1jXBcBAM5OXAIrKt2VU52pHeIQjgoDMWQlT4ARqzwAJwJynNHfoLlKU2UfKxio7Xxxe2MLKQvROO7nnWcb2UkWBIoKteAKkubuw5Vykw6JtyZCW5xp5d3mfpNZAsNHK1M6Rmxl54IbMkaUtdIAq8bzBJjUbpteNzO1mP9cqOtC5zeUWF7iTePTdZBYoXppoiYdgZDZD')
 #Crawl Facebook
+graph = facebook.GraphAPI('CAADbpT1jXBcBACTjzqZCnVIQHtw5lnB7oJ5CZAYmZA7AOR6YrhUyQYGInqjeo3sGCZC0NijT5lqGnvYJdrRyCIZAZA1ple2zq1ooHDFmFMnvZCZBKd5QdxcfSxF2nZAhE6i60MAzJwPsypmcL0RhXGpIFGdj9dhzXRmtMVQLWRlVV8Dgw87QL2FCrrtGph8e2MxxTRmZA3pHkIsQZDZD')
+
 for location in locations:
     try:
         location_fb = graph.get_object(location)
