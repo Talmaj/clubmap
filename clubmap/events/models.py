@@ -144,7 +144,7 @@ class Location(models.Model):
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
     def setCoordinates(self):
-        adress = street + ', ' + postal_code + ' ' + city
+        address = self.street + ', ' + self.postal_code + ' ' + self.city
         self.latitude, self.longitude = Geocoder.geocode(address).coordinates
 '''
 Name Abstraction Class will be used for machine learning
