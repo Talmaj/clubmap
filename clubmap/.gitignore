@@ -1,0 +1,2 @@
+# ignore .pyc that are always created automaticaly
+*.pyc
