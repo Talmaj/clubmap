@@ -30,7 +30,12 @@ class Artist(models.Model):
     
     def __unicode__(self):
         return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + str(self.soundcloud_id) + ' ]'
-    def get_sc_id(self):
+    def get_sc_id(self, name):
+        self.name = name
+        
+        #error aversion
+        self.ignore_sc = 0
+
         try:
             user = client.get('/users', q=self.name)
             #if user is not emtpy assign data
@@ -99,11 +104,26 @@ class Event(models.Model):
     #Moved to Artists because they determine the sound being played
     #genres = models.ManyToManyField(Genre)
     location = models.ForeignKey('Location')
-    fb_id = models.PositiveIntegerField(unique=True)
+    #fb_id = models.PositiveIntegerField(unique=True)
     
+    def setAttr(self, event_name, event_date_start, event_date_end, price, 
+                artists):
+        '''
+        Set all the Event attributes. 
+        Event name, start datetime, end datetime, price, lineup
+        '''
+        self.event_name = event_name
+        self.event_date_start = event_date_start
+        self.event_date_end = event_date_end
+        self.price = price
+        self.artists = artists
+
+        #error aversion
+        #self.fb_id = 1
+
     #could use some more love
     def __unicode__(self):
-        return 'Event[ ' + self.event_name + ', ' + self.event_date + ' ]'
+        return 'Event[ ' + self.event_name + ', ' + 'startdate' + ' ]'
     
 
 class Location(models.Model):
@@ -139,8 +159,19 @@ class Location(models.Model):
     website = models.CharField(max_length=200, blank=True)
     description = models.TextField()
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
-    fb_id = models.PositiveIntegerField(unique=True)
+    #fb_id = models.PositiveIntegerField(unique=True)
     
+    def setAddress(self, street, postal_code, location_name):
+        '''
+        Set name of the street, postal code and venue name.
+        '''
+        self.street = street
+        self.postal_code = postal_code
+        self.location_name = location_name
+
+        #error aversion
+        #self.fb_id = 1
+
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
     def setCoordinates(self):

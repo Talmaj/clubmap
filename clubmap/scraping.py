@@ -2,7 +2,8 @@ import re
 import urllib2
 import time
 import requests
-from time import strptime
+#from time import strptime
+import datetime as dt
 
 
 def get_events(dy, mn, yr, ai, v='day'):
@@ -27,7 +28,9 @@ def get_events(dy, mn, yr, ai, v='day'):
     events: list
         List of Ids of events
     '''
-        
+
+    dy, mn, yr, ai = [str(i) for i in [dy, mn, yr, ai]]
+
     url = "http://www.residentadvisor.net/events.aspx?ai=%s&v=%s&mn=%s&yr=%s&dy=%s"% \
           (ai, v, mn, yr, dy)
     f = urllib2.urlopen(url)
@@ -122,7 +125,7 @@ def clean_attributes(attr):
     '''
     
     dc = {}
-    dc['title'] = _clean_title(attr[0])
+    dc['title'], dc['venue'] = _clean_title(attr[0])
     dc['attending'] = int(attr[1])
     dc['start'], dc['end'] = _get_times(attr[2])
     dc['address'], dc['post'] = _get_address(attr[3])
@@ -143,15 +146,21 @@ def _get_times(date):
     
     Returns
     -------
-    start: tine.struct_time
+    start: time.struct_time
         Start time
-    end: tine.struct_time
+    end: time.struct_time
         End time
     '''
 
     days = re.findall('<a href="events.aspx\?(.+?)>', date)
-    hours = re.findall('(\d+?:\d+?) - (\d+?:\d+)', date)[0]
-    st_h, end_h = hours
+    hours = re.findall('(\d+?:\d+?)', date)
+
+    if len(hours) > 1:
+        st_h, end_h = hours
+    else:
+        st_h = hours[0]
+        end_h = ''
+
     start = days[0] + '<>' + st_h
     
     if len(days) > 1:
@@ -159,19 +168,37 @@ def _get_times(date):
     else:
         end = days[0] + '<>' + end_h
     
-    start = strptime(start, 'ai=34&v=day&mn=%m&yr=%Y&dy=%d"<>%H:%M')
-    end = strptime(end, 'ai=34&v=day&mn=%m&yr=%Y&dy=%d"<>%H:%M')
+    start = dt.datetime.strptime(start, 'ai=34&v=day&mn=%m&yr=%Y&dy=%d"<>%H:%M')
+    if end_h:
+        end = dt.datetime.strptime(end, 'ai=34&v=day&mn=%m&yr=%Y&dy=%d"<>%H:%M')
+    else:
+        end = None
     
     # TODO if end is before start, could do with datetime
-    #if end < start:
-    #    import datetime
-    #    delta = datetime.timedelta(days=1)
-    #    end = datetime.date(end.tm_year, end.tm_mon, end.tm_mday) + delta
+    if end and end < start:
+        delta = dt.timedelta(days=1)
+        end = end + delta
     
     return start, end
 
 def _clean_title(title):
-    return re.sub(' at.*', '', title)
+    '''
+    Parameters
+    ----------
+    title: str
+        Title string from find_attributes()
+
+    Returns
+    -------
+    party_name: str
+        Name of the party
+    venue: str
+        Venue name
+    '''
+    party_name = re.sub(' at.*', '', title)
+    venue = re.sub('.*at ', '', title)
+
+    return party_name, venue
 
 def _get_address(address):
     '''
