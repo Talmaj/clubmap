@@ -30,12 +30,7 @@ class Artist(models.Model):
     
     def __unicode__(self):
         return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + str(self.soundcloud_id) + ' ]'
-    def get_sc_id(self, name):
-        self.name = name
-        
-        #error aversion
-        self.ignore_sc = 0
-
+    def get_sc_id(self):
         try:
             user = client.get('/users', q=self.name)
             #if user is not emtpy assign data
@@ -108,6 +103,7 @@ class Event(models.Model):
     
     def setAttr(self, event_name, event_date_start, event_date_end, price, 
                 artists):
+        ## this can be deleted
         '''
         Set all the Event attributes. 
         Event name, start datetime, end datetime, price, lineup
@@ -162,6 +158,7 @@ class Location(models.Model):
     #fb_id = models.PositiveIntegerField(unique=True)
     
     def setAddress(self, street, postal_code, location_name):
+        ## this can be deleted
         '''
         Set name of the street, postal code and venue name.
         '''

@@ -49,22 +49,23 @@ def save_to_db(dc):
     '''
     
     #saving location data
-    location = Location()
-    location.setAddress(dc['address'],  dc['post'], dc['venue'])
+    location = Location(street=dc['address'], postal_code=dc['post'], 
+                        location_name=dc['venue'])
     location.setCoordinates()
     location.save()
     
-    #saving artists data
-    for performer in dc['line_up']:
-        artist = Artist()
-        artist.get_sc_id(performer)
-        artist.save()
-    
+
     #saving event data
-    event = Event()
-    event.setAttr(dc['title'], dc['start'], dc['end'], dc['price'], 
-                  dc['line_up'])
+    event = Event(event_name=dc['title'], event_date_start=dc['start'], 
+                    event_date_end=dc['end'], price=dc['price'], 
+                    location=location)
     event.save()
     
-
+    #saving artists data
+    for performer in dc['line_up']:
+        artist = Artist(name=performer, ignore_sc=0)
+        artist.get_sc_id()
+        artist.save()
+        event.artists.add(artist)
+    
     

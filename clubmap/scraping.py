@@ -172,10 +172,11 @@ def _get_times(date):
     if end_h:
         end = dt.datetime.strptime(end, 'ai=34&v=day&mn=%m&yr=%Y&dy=%d"<>%H:%M')
     else:
-        end = None
+        #TODO better solution
+        end = start
     
     # TODO if end is before start, could do with datetime
-    if end and end < start:
+    if end < start:
         delta = dt.timedelta(days=1)
         end = end + delta
     
@@ -293,17 +294,29 @@ def _get_line_up(line_up, labels=False):
     
     line_up = line_up.strip('\r\n').strip()
     line_up = clean_tags(line_up)
+
+    # if each artist in new row
     line_up = line_up.split('\r\n')
     line_up = [x.replace('(live)', '').strip() for x in line_up
                if x not in ['', '-']]
     
+    # if lineup written in a single row and separated with //
+    if len(line_up) == 1:
+        line_up = line_up[0].split(' // ')
+        line_up = [x.strip() for x in line_up]
+
     if labels:
         # TODO for labels
         #[_get_label(x) for x in line_up]
         pass
     else:
+        # if label in brackets
         line_up = [re.sub('\(.+\)', '', x) for x in line_up]
-        
+        line_up = [re.sub('\[.+\]', '', x) for x in line_up]
+        # if label after ///
+        line_up = [re.sub('.*( ///*)', '', x) for x in line_up]
+
+
         # final cleaning
         line_up = [x.strip() for x in line_up if x not in ['', '-']]
     
