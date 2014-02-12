@@ -50,7 +50,7 @@ def save_to_db(dc):
     
     #saving location data
     location = Location(street=dc['address'], postal_code=dc['post'], 
-                        location_name=dc['venue'])
+                        city=dc['city'], location_name=dc['venue'])
     location.setCoordinates()
     location.save()
     

@@ -84,7 +84,7 @@ def find_attributes(html):
     '''
     
     # select only important part
-    regex = '<li class="but circle-left bbox"><.+?>Listings(.+?)Upcoming events'
+    regex = '<li class="but circle-left bbox"><.+?>Listings(.+?)to join the conversation.</h2>'
     html = re.findall(regex, html, re.DOTALL)[0]
     
     regex = '<h1>(.*?)</h1>'
@@ -128,7 +128,7 @@ def clean_attributes(attr):
     dc['title'], dc['venue'] = _clean_title(attr[0])
     dc['attending'] = int(attr[1])
     dc['start'], dc['end'] = _get_times(attr[2])
-    dc['address'], dc['post'] = _get_address(attr[3])
+    dc['address'], dc['post'], dc['city'] = _get_address(attr[3])
     dc['price'] = _money_parser(attr[4])
     dc['line_up'] =  _get_line_up(attr[5])
     
@@ -223,8 +223,9 @@ def _get_address(address):
     temp = address[1].split('; ')
     street = temp[0]
     post = re.findall('(\d+) ', temp[-1])[0]
+    city = re.sub(post, '', temp[-1]).strip(';').strip()
     
-    return street, post
+    return street, post, city
 
 def _money_parser(cost):
     '''
@@ -248,7 +249,10 @@ def _money_parser(cost):
     
     if len(costs) == 1:
         return int(costs[0])
-    #TODO else:
+    #TODO else:    
+    else:
+        return 9.5
+
 
 # <codecell>
 
@@ -303,7 +307,12 @@ def _get_line_up(line_up, labels=False):
     # if lineup written in a single row and separated with //
     if len(line_up) == 1:
         line_up = line_up[0].split(' // ')
+        if len(line_up) == 1: 
+            line_up = line_up[0].split(', ')
+            # TODO if a lot of this cases, can do some function
         line_up = [x.strip() for x in line_up]
+
+    line_up = _clean_line_up(line_up)
 
     if labels:
         # TODO for labels
@@ -319,5 +328,26 @@ def _get_line_up(line_up, labels=False):
 
         # final cleaning
         line_up = [x.strip() for x in line_up if x not in ['', '-']]
-    
+    print line_up
     return line_up
+
+def _clean_line_up(line_up):
+    '''
+    Cleans the line up list of all the stupid things
+    # TODO it should remove the name of the club where it is playing
+    # add stuff with usage, mostly .strip and .replace
+
+    Parameters
+    ----------
+    line_up: list
+        List of Artists, uncleaned
+
+    Returns: list
+        Cleaned line up list
+    '''
+
+    exclude = ['TBA', 'tba', '...', 'Berlin']
+    line_up = [x.strip('Main:').strip('Mini:') for x in line_up 
+                if x not in exclude and not x.startswith('http://')]
+    return line_up
+

@@ -12,9 +12,15 @@ client = soundcloud.Client(client_id='5b3cdaac22afb1d743aed0031918a90f')
 #Search artists tracks and return his most used genre
 def determineGenre(client,sc_id):
     tracks = client.get('users/'+str(sc_id)+'/tracks')
-    list = []
-    for track in tracks: list.append(track.genre)
-    occur = Counter(list)
+    if not tracks: return '' # if there are no tracks
+
+    _list = []
+    for track in tracks: _list.append(track.genre)
+    if not _list: return '' # if there are no genres defined for the tracks
+    if not list(set(_list))[0]: return '' # if all elements are None
+    #print _list
+
+    occur = Counter(_list)
     i = 0
     while (occur.most_common()[i][0] == None or occur.most_common()[i][0] == ''):
         i = i+1
@@ -31,29 +37,29 @@ class Artist(models.Model):
     def __unicode__(self):
         return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + str(self.soundcloud_id) + ' ]'
     def get_sc_id(self):
-        try:
-            user = client.get('/users', q=self.name)
-            #if user is not emtpy assign data
-            if(len(user)!=0):
-                user = user[0]
-                if not(user.website_title == None): self.label = user.website_title
-                self.soundcloud_id = user.id
+        #try:
+        user = client.get('/users', q=self.name)
+        #if user is not emtpy assign data
+        if(len(user)!=0):
+            user = user[0]
+            if not(user.website_title == None): self.label = user.website_title
+            self.soundcloud_id = user.id
+            
+            artist_genre = determineGenre(client,user.id)
+            try:
+                #get id corresponding to genre
+                Genre_artist = Genre.objects.get(genre_name=artist_genre)
+                #and save it
+                self.genre = Genre_artist.id
                 
-                artist_genre = determineGenre(client,user.id)
-                try:
-                    #get id corresponding to genre
-                    Genre_artist = Genre.objects.get(genre_name=artist_genre)
-                    #and save it
-                    self.genre = Genre_artist.id
-                    
-                except Exception, e:
-                        #Add Genre to unkown Genres TODO: this is not working quite right yet
-                        print "genre not found {}".format(artist_genre)
-                        unkown = unkownGenre(name=artist_genre, soundcloud_id=user.id)
-                        unkown.save()
-        except Exception, ex:
-            print ex
-            raise ex
+            except Exception, e:
+                    #Add Genre to unkown Genres TODO: this is not working quite right yet
+                    print "genre not found {}".format(artist_genre)
+                    unkown = unkownGenre(name=artist_genre, soundcloud_id=user.id)
+                    unkown.save()
+        #except Exception, ex:
+        #    print ex
+        #    raise ex
 '''
 TODO:
 -Read this:
