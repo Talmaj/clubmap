@@ -6,6 +6,7 @@ from collections import Counter
 import soundcloud
 
 client = soundcloud.Client(client_id='5b3cdaac22afb1d743aed0031918a90f')
+##This might be legacy code
 
 #Search artists tracks and return his most used genre
 def determineGenre(client,sc_id):

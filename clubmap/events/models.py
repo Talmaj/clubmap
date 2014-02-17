@@ -98,8 +98,8 @@ class Event(models.Model):
     event_date_end = models.DateTimeField('date and time event ends')
     pub_date = models.DateTimeField('dateime event was added to database',auto_now_add=True)
     price = models.DecimalField(max_digits = 5, decimal_places = 2)
-    description = models.TextField()
-    image = models.ImageField(upload_to ='events/img/')
+    description = models.TextField(blank = True)
+    image = models.ImageField(upload_to ='events/img/', blank = True)
     #may need some more thinkin not sure right now
     artists = models.ManyToManyField(Artist)
     #Moved to Artists because they determine the sound being played
@@ -107,21 +107,6 @@ class Event(models.Model):
     location = models.ForeignKey('Location')
     #fb_id = models.PositiveIntegerField(unique=True)
     
-    def setAttr(self, event_name, event_date_start, event_date_end, price, 
-                artists):
-        ## this can be deleted
-        '''
-        Set all the Event attributes. 
-        Event name, start datetime, end datetime, price, lineup
-        '''
-        self.event_name = event_name
-        self.event_date_start = event_date_start
-        self.event_date_end = event_date_end
-        self.price = price
-        self.artists = artists
-
-        #error aversion
-        #self.fb_id = 1
 
     #could use some more love
     def __unicode__(self):
@@ -145,6 +130,7 @@ class Location(models.Model):
                 #(NETHERLANDS, 'Nederland'),
                 #(UNITEDKINGDOM, 'Great Britian'),
                 )
+    
     def get_image_path(instance, filename):
         sec = str(time.time()).split('.')[0]
         path = '/img/'+ instance.location_name +'/%Y/%m/' + sec + '_' + filename
@@ -162,18 +148,7 @@ class Location(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
     #fb_id = models.PositiveIntegerField(unique=True)
-    
-    def setAddress(self, street, postal_code, location_name):
-        ## this can be deleted
-        '''
-        Set name of the street, postal code and venue name.
-        '''
-        self.street = street
-        self.postal_code = postal_code
-        self.location_name = location_name
 
-        #error aversion
-        #self.fb_id = 1
 
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'

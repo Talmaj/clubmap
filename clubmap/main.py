@@ -25,19 +25,15 @@ def main(dy, mn, yr, ai, save=True):
         List of dictionaries with all the valuable information
         title, attending, start, end, address, post, price, line_up
     '''
-    events = get_events(dy, mn, yr, ai, v='day')
-    list_of_events = []
-    for event in events:
-        html = get_html(event)
-        attr = find_attributes(html)
-        dc = clean_attributes(attr)
-        if save:
-            save_to_db(dc)
-        list_of_events += [dc]
-    return list_of_events
+    dc = get_dc(dy, mn, yr)
+    print_dc(dc)
+    save = raw_input("Do you wish to save to django db? type y for yes anything else for no \n")
+    if (save == "y"):
+        print "saving...."
+        save_to_db(dc)
+    
 
-
-def save_to_db(dc):
+def save_to_db(container):
     '''
     Saves the info in the database
     
@@ -47,25 +43,28 @@ def save_to_db(dc):
         A dictionary containing all the valuable information
         generated with clean_attributes() function
     '''
+    print container
+    for dc in container:
+        #TODO check if already exists
+        #saving location data
+        location = Location(street=dc['address'], postal_code=dc['post'], 
+                            city=dc['city'], location_name=dc['venue'])
+        location.setCoordinates()
+        location.save()
+        
     
-    #saving location data
-    location = Location(street=dc['address'], postal_code=dc['post'], 
-                        city=dc['city'], location_name=dc['venue'])
-    location.setCoordinates()
-    location.save()
-    
-
-    #saving event data
-    event = Event(event_name=dc['title'], event_date_start=dc['start'], 
-                    event_date_end=dc['end'], price=dc['price'], 
-                    location=location)
-    event.save()
-    
-    #saving artists data
-    for performer in dc['line_up']:
-        artist = Artist(name=performer, ignore_sc=0)
-        artist.get_sc_id()
-        artist.save()
-        event.artists.add(artist)
+        #saving event data
+        event = Event(event_name=dc['title'], event_date_start=dc['start'], 
+                        event_date_end=dc['end'], price=dc['price'], 
+                        location=location)
+        event.save()
+        
+        #TODO check if already exists
+        #saving artists data
+        for performer in dc['line_up']:
+            artist = Artist(name=performer, ignore_sc=0)
+            artist.get_sc_id()
+            artist.save()
+            event.artists.add(artist)
     
     

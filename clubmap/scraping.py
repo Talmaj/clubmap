@@ -5,7 +5,28 @@ import requests
 #from time import strptime
 import datetime as dt
 
-
+def get_dc(dy, mn, yr):
+    events = get_events(dy,mn,yr,34)
+    dc = []
+    for event in events:
+        html = get_html(event)
+        attr = find_attributes(html)
+        dc += [clean_attributes(attr)]
+    return dc
+def print_dc(dc):
+    for event in dc:
+        print ""
+        print "---------- {} ----------".format(event['title'].encode("utf-8"))
+        print "Start : {}".format(event['start'])
+        print "End : {}".format(event['end'])
+        print "Location : {}".format(event['venue'].encode("utf-8"))
+        print "Address : {}".format(event['address'].encode("utf-8"))
+        print "Price : {}".format(event['price'])
+        print "LineUp :"
+        for artist in event['line_up']:
+            print "    {}".format(artist.encode("utf-8"))
+        print "---------- END ----------"
+        print""
 def get_events(dy, mn, yr, ai, v='day'):
     '''
     You insert date and recieve ids from events.
@@ -328,7 +349,7 @@ def _get_line_up(line_up, labels=False):
 
         # final cleaning
         line_up = [x.strip() for x in line_up if x not in ['', '-']]
-    print line_up
+    #print line_up
     return line_up
 
 def _clean_line_up(line_up):
