@@ -1,23 +1,31 @@
-'''
-import sys
-sys.path.append('/User/Alan/Documents/clubmap/clubmap')
-from django.core.management import setup_environ
-import clubmap.settings
-setup_environ(settings)
-'''
 #from events.models import Artist, Event, Location
 import facebook
 import csv
 import re
 import datetime
+import sys
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+if(len(sys.argv) < 3):
+    print bcolors.FAIL + "usage: crawlFB.py LINKSFILE API_KEY" + bcolors.ENDC
+    exit()
+api_key = sys.argv[2]
+path = sys.argv[1]
 locations = []
 
 #EXTRACT FROM CSV
-csvfile = 'facebook_links_gefunden.csv'
+csvfile = open(path, 'rb')
 linkreader = csv.reader(csvfile)
 linkreader.next()
 for row in linkreader:
+    print(row)
     location_string = re.sub('[\[\]<>]','',row[1]).split(',')
     for location in location_string:
         if "/" in location:
@@ -25,29 +33,29 @@ for row in linkreader:
         else:
             locations.append(location.strip())
 
-graph = facebook.GraphAPI('CAADbpT1jXBcBAJojXkPeUhiB0fyBdxZBYZC3fPMYHhUZAmMNHwaOZB6fi0VkOqCpxGBRSQaynk0XgTtISahrgZAUBcfZC73dmw5EExzznyLypmkog5kVjAtLOZC6WVbjDZCZCvRqT2Nx23pApRC3txqstOmnsxRhImS0LxXaKM0Gz0dy6K28OUdY4bEVCOIhDeiK6pI40HaNuhgZDZD')
+#Always replace with a fresh key
+graph = facebook.GraphAPI(api_key)
+
 #Crawl Facebook
 for location in locations:
     try:
         location_fb = graph.get_object(location)
-    except Exception, e:
-        print 'error for {}'.format(location)
     #TODO: create location model save and relate id to event models
     #check if location already exists by saving fb_id
-    try:
         events = graph.get_connections(location_fb['id'], 'events')
+        print bcolors.OKGREEN + location_fb['name'] + bcolors.ENDC
+
+        for event in events['data']:
+            #check if event already exists by saving also fb_id
+            date = datetime.datetime.strptime('2011-03-06T03:36:45+0000','%Y-%m-%dT%H:%M:%S+0000')
+            print '-----' + event['name']
+            #get description
+            event_detail = graph.get_object(event['id'])['description']
+            #TODO: extract artists
+            #TODO: create event model
     except Exception, e:
-        print 'Error retrieving events from {}'.format(location)
+        print bcolors.WARNING + 'Error retrieving events from {}'.format(location) + bcolors.ENDC
         
-    print location_fb['name']
-    for event in events['data']:
-        #check if event already exists by saving also fb_id
-        date = datetime.datetime.strptime('2011-03-06T03:36:45+0000','%Y-%m-%dT%H:%M:%S+0000')
-        print '-----' + event['name']
-        #get description
-        event_detail = graph.get_object(event['id'])['description']
-        #TODO: extract artists
-        #TODO: create event model
 
 def cleanName(string):
     string = string.strip().strip('/').strip('/').strip()

@@ -30,7 +30,7 @@ def determineGenre(client,sc_id):
 class Artist(models.Model):
     name = models.CharField(max_length=200)
     label = models.CharField(max_length=200, blank=True)
-    soundcloud_id = models.PositiveIntegerField(null=True,blank=True)
+    soundcloud_id = models.PositiveIntegerField(null=True,unique=True)
     genres = models.ManyToManyField('Genre',null=True,blank=True)
     ignore_sc = models.BooleanField('Ignore Soundcloud')
     
