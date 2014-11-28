@@ -1,10 +1,19 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
+from django.shortcuts import render_to_response, RequestContext
+from django.template.response import SimpleTemplateResponse
 from django.core.urlresolvers import reverse
 from django.views.generic import ListView, DetailView
 import datetime
 from events.models import Event, Location, Artist
 
+
+def index(request):
+    context = RequestContext(request)
+    event_list = Event.objects.order_by('event_date_start');
+    context_dic = {'events':event_list}
+    return render_to_response('events/event_list.html', context_dic, context)
 
 class IndexView(ListView):
     model = Event

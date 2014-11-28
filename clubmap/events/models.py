@@ -100,12 +100,8 @@ class Event(models.Model):
     price = models.DecimalField(max_digits = 5, decimal_places = 2)
     description = models.TextField(blank = True)
     image = models.ImageField(upload_to ='events/img/', blank = True)
-    #may need some more thinkin not sure right now
     artists = models.ManyToManyField(Artist)
-    #Moved to Artists because they determine the sound being played
-    #genres = models.ManyToManyField(Genre)
     location = models.ForeignKey('Location')
-    #fb_id = models.PositiveIntegerField(unique=True)
     
 
     #could use some more love
@@ -147,8 +143,7 @@ class Location(models.Model):
     website = models.CharField(max_length=200, blank=True)
     description = models.TextField()
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
-    #fb_id = models.PositiveIntegerField(unique=True)
-
+    fb_id = models.PositiveIntegerField(unique=True, null=True)
 
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
@@ -157,6 +152,7 @@ class Location(models.Model):
         self.latitude, self.longitude = Geocoder.geocode(address).coordinates
 '''
 Name Abstraction Class will be used for machine learning
+Move this to artist??
 '''
 class ArtistNames(models.Model):
     name = models.CharField(max_length=200)
@@ -168,7 +164,7 @@ class ArtistNames(models.Model):
         return 'NameAbstraction[ ' + self.name + '-->' + artistsRef.name + ' ]'
 
 '''
-Unknown Genres will be saved here with a reference to the Artist
+Unknown Genres will be saved here with a reference to the Artistsearch fftw3
 '''
 class unkownGenre(models.Model):
     name = models.CharField(max_length=200)

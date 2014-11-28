@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! Users/Alan/Documents/clubmap/venv/bin python
 import os
 import sys
 
