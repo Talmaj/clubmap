@@ -161,7 +161,7 @@ class Location(models.Model):
     website = models.CharField(max_length=200, blank=True)
     description = models.TextField()
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
-    #fb_id = models.PositiveIntegerField(unique=True)
+    fb_id = models.PositiveIntegerField(unique=True, null=True)
     
     def setAddress(self, street, postal_code, location_name):
         ## this can be deleted

@@ -64,7 +64,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'clubmap',
         'USER': 'clubmap',
-        'PASSWORD': 'clubmap',
+        'PASSWORD': 'Griesgr135',
         'HOST': '',
         'PORT': '',
 }
