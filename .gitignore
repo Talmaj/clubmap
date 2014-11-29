@@ -1,3 +1,7 @@
 # ignore .pyc that are always created automaticaly
 *.pyc
-venv_ubuntu
+ENV/
+venv/
+*.*\~
+venv_ubuntu/
+.DS_Store
