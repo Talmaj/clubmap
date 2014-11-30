@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'south',
     'events',
 )
@@ -65,7 +66,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'clubmap',
         'USER': 'clubmap',
-        'PASSWORD': 'clubmap',
+        'PASSWORD': 'Griesgr135',
         'HOST': '',
         'PORT': '',
 }

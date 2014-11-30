@@ -53,6 +53,7 @@ def save_to_db(container):
         location.save()
         
     
+<<<<<<< HEAD
         #saving event data
         event = Event(event_name=dc['title'], event_date_start=dc['start'], 
                         event_date_end=dc['end'], price=dc['price'], 
@@ -66,5 +67,29 @@ def save_to_db(container):
             artist.get_sc_id()
             artist.save()
             event.artists.add(artist)
+=======
+    #saving location data
+    location = Location(street=dc['address'], postal_code=dc['post'], 
+                        city=dc['city'], location_name=dc['venue'])
+    location.setCoordinates()
+    
+    # making sure that postal_code is an integer, if we didn't find a postal_code
+    location.postal_code = 0 if location.postal_code == '' else location.postal_code
+    location.save()
+    
+
+    #saving event data
+    event = Event(event_name=dc['title'], event_date_start=dc['start'], 
+                    event_date_end=dc['end'], price=dc['price'], 
+                    location=location)
+    event.save()
+    
+    #saving artists data
+    for performer in dc['line_up']:
+        artist = Artist(name=performer, ignore_sc=0)
+        artist.get_sc_id()
+        artist.save()
+        event.artists.add(artist)
+>>>>>>> f39f800b9ef04f420b39abab25aa1c0dc0278417
     
     
