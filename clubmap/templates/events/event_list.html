@@ -1,0 +1,15 @@
+{% extends "events/base.html" %}
+
+{% block main %}
+
+{% if events %}
+	<ul>
+		{% for event in events %}
+			<li>{{event.event_name}} at {{ event.location.location_name }}</li>
+		{% endfor %}
+	<ul>
+{% else %}
+	<strong> No Events in Database </strong>
+{% endif %}
+
+{% endblock %}
