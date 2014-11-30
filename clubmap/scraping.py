@@ -84,7 +84,7 @@ def find_attributes(html):
     '''
     
     # select only important part
-    regex = '<li class="but circle-left bbox"><.+?>Listings(.+?)to join the conversation.</h2>'
+    regex = '<li class="but circle-left bbox">(.+?)<span>01 /</span>'
     html = re.findall(regex, html, re.DOTALL)[0]
     
     regex = '<h1>(.*?)</h1>'
@@ -220,10 +220,15 @@ def _get_address(address):
     
     address = [clean_tags(x).strip() for x in address.split('<br />')]
     venue = address[0]
-    temp = address[1].split('; ')
+    
+    sep = ';' if ';' in address[1] else ',' # separator in the address line
+    temp = address[1].split('%s ' % sep)
     street = temp[0]
-    post = re.findall('(\d+) ', temp[-1])[0]
-    city = re.sub(post, '', temp[-1]).strip(';').strip()
+    try:
+        post = re.findall('(\d+) ', temp[-1])[0]
+        city = re.sub(post, '', temp[-1]).strip(';,').strip()
+    except:
+        post, city = '', ''
     
     return street, post, city
 

@@ -52,6 +52,9 @@ def save_to_db(dc):
     location = Location(street=dc['address'], postal_code=dc['post'], 
                         city=dc['city'], location_name=dc['venue'])
     location.setCoordinates()
+    
+    # making sure that postal_code is an integer, if we didn't find a postal_code
+    location.postal_code = 0 if location.postal_code == '' else location.postal_code
     location.save()
     
 
