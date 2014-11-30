@@ -54,6 +54,8 @@ class Migration(SchemaMigration):
             ('description', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('image', self.gf('django.db.models.fields.files.ImageField')(max_length=100, blank=True)),
             ('location', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['events.Location'])),
+            ('gay', self.gf('django.db.models.fields.BooleanField')()),
+            ('published', self.gf('django.db.models.fields.BooleanField')()),
         ))
         db.send_create_signal(u'events', ['Event'])
 
@@ -81,6 +83,7 @@ class Migration(SchemaMigration):
             ('description', self.gf('django.db.models.fields.TextField')()),
             ('image', self.gf('django.db.models.fields.files.ImageField')(max_length=100, blank=True)),
             ('fb_id', self.gf('django.db.models.fields.PositiveIntegerField')(unique=True, null=True)),
+            ('published', self.gf('django.db.models.fields.BooleanField')()),
         ))
         db.send_create_signal(u'events', ['Location'])
 
@@ -88,17 +91,9 @@ class Migration(SchemaMigration):
         db.create_table(u'events_artistnames', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('artist', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['events.Artist'])),
         ))
         db.send_create_signal(u'events', ['ArtistNames'])
-
-        # Adding M2M table for field artist on 'ArtistNames'
-        m2m_table_name = db.shorten_name(u'events_artistnames_artist')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('artistnames', models.ForeignKey(orm[u'events.artistnames'], null=False)),
-            ('artist', models.ForeignKey(orm[u'events.artist'], null=False))
-        ))
-        db.create_unique(m2m_table_name, ['artistnames_id', 'artist_id'])
 
         # Adding model 'unkownGenre'
         db.create_table(u'events_unkowngenre', (
@@ -134,9 +129,6 @@ class Migration(SchemaMigration):
         # Deleting model 'ArtistNames'
         db.delete_table(u'events_artistnames')
 
-        # Removing M2M table for field artist on 'ArtistNames'
-        db.delete_table(db.shorten_name(u'events_artistnames_artist'))
-
         # Deleting model 'unkownGenre'
         db.delete_table(u'events_unkowngenre')
 
@@ -153,7 +145,7 @@ class Migration(SchemaMigration):
         },
         u'events.artistnames': {
             'Meta': {'object_name': 'ArtistNames'},
-            'artist': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['events.Artist']", 'symmetrical': 'False'}),
+            'artist': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['events.Artist']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
@@ -164,11 +156,13 @@ class Migration(SchemaMigration):
             'event_date_end': ('django.db.models.fields.DateTimeField', [], {}),
             'event_date_start': ('django.db.models.fields.DateTimeField', [], {}),
             'event_name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'gay': ('django.db.models.fields.BooleanField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'blank': 'True'}),
             'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['events.Location']"}),
             'price': ('django.db.models.fields.DecimalField', [], {'max_digits': '5', 'decimal_places': '2'}),
-            'pub_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'})
+            'pub_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'published': ('django.db.models.fields.BooleanField', [], {})
         },
         u'events.genre': {
             'Meta': {'object_name': 'Genre'},
@@ -189,6 +183,7 @@ class Migration(SchemaMigration):
             'longitude': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'postal_code': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'pub_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'published': ('django.db.models.fields.BooleanField', [], {}),
             'street': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'website': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },

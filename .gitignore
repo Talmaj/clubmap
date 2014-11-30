@@ -2,9 +2,12 @@
 *.pyc
 
 # ignore virtualenvs
-ENV/
-venv/
-venv_ubuntu/
+ENV/**
+venv/**
+venv_ubuntu/**
+
+#ignore settings
+clubmap/clubmap/settings.py
 
 # ignore emacs buffer files
 *.*\~
