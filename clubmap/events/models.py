@@ -144,8 +144,6 @@ class Location(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
     fb_id = models.PositiveIntegerField(unique=True, null=True)
-<<<<<<< HEAD
-=======
     
     def setAddress(self, street, postal_code, location_name):
         ## this can be deleted
@@ -158,7 +156,6 @@ class Location(models.Model):
 
         #error aversion
         #self.fb_id = 1
->>>>>>> f39f800b9ef04f420b39abab25aa1c0dc0278417
 
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
