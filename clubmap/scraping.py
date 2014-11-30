@@ -5,14 +5,18 @@ import requests
 #from time import strptime
 import datetime as dt
 
-def get_dc(dy, mn, yr):
-    events = get_events(dy,mn,yr,34)
+def get_dc(dy, mn, yr, ai=34):
+    '''
+    Returns the list of the dictionaries with events from all the scraped data from RA.
+    '''
+    events = get_events(dy,mn,yr,ai)
     dc = []
     for event in events:
         html = get_html(event)
         attr = find_attributes(html)
         dc += [clean_attributes(attr)]
     return dc
+
 def print_dc(dc):
     for event in dc:
         print ""
@@ -27,6 +31,7 @@ def print_dc(dc):
             print "    {}".format(artist.encode("utf-8"))
         print "---------- END ----------"
         print""
+
 def get_events(dy, mn, yr, ai, v='day'):
     '''
     You insert date and recieve ids from events.
