@@ -1,7 +1,15 @@
 # ignore .pyc that are always created automaticaly
 *.pyc
+
+# ignore virtualenvs
 ENV/
 venv/
-*.*\~
 venv_ubuntu/
+
+# ignore emacs buffer files
+*.*\~
+
 .DS_Store
+
+# ignore ipython notebook files (used for development)
+*.ipynb

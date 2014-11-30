@@ -18,7 +18,12 @@ function django_server {
 function mysql_shell {
     osascript -e 'tell application "Terminal" to do script "mysql -u talmaj -p" in selected tab of the front window'
     }
- 
+function django_notebook {
+    osascript -e 'tell application "Terminal" to do script "python manage.py shell_plus --notebook" in selected tab of the front window'
+    }
+
+
+open -a safari https://www.hostedredmine.com/login\?back_url\=https%3A%2F%2Fwww.hostedredmine.com%2Fprojects%2Fclubmap%2Fissues 
 mysql.server start 
 mysql_shell
 
@@ -32,4 +37,9 @@ django_shell
 
 new_tab
 clear
+django_notebook
+
+new_tab
+clear
+
 
