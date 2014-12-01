@@ -1,0 +1,13 @@
+{% extends "events/base.html" %}
+
+{% block main %}
+
+<h2> {{ object.event_name }} </h2>
+<h3> <a href="{% url 'events:detailLocation' pk=object.location.id %}"> @ {{ object.location.location_name }}</a> </h3>
+
+<ul>
+	{% for artist in object.artists.all %}
+		<li><a href="{% url 'events:detailArtist' pk=artist.id %}"> {{ artist.name }} </a> </li>
+	{% endfor %}
+</ul>
+{% endblock %}

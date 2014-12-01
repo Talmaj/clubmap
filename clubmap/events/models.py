@@ -8,7 +8,6 @@ from pygeocoder import Geocoder
 
 client = soundcloud.Client(client_id='5b3cdaac22afb1d743aed0031918a90f')
 
-
 #Search artists tracks and return his most used genre
 def determineGenre(client,sc_id):
     tracks = client.get('users/'+str(sc_id)+'/tracks')
@@ -57,9 +56,8 @@ class Artist(models.Model):
                     print "genre not found {}".format(artist_genre)
                     unkown = unkownGenre(name=artist_genre, soundcloud_id=user.id)
                     unkown.save()
-        #except Exception, ex:
-        #    print ex
-        #    raise ex
+        else:
+            return None;
 '''
 TODO:
 -Read this:
@@ -82,7 +80,7 @@ Event Model
 TODO:
 -Add Field Options for enhanced treatmend in validation and backend, see:
     https://docs.djangoproject.com/en/dev/ref/models/fields/#field-options
--File uploads not working
+-File uploads not working 
 
 '''  
 class Event(models.Model):
@@ -94,15 +92,24 @@ class Event(models.Model):
         return path
     
     event_name = models.CharField(max_length=200)
+    description = models.TextField(blank = True)
+    
     event_date_start = models.DateTimeField('date and time event starts')
     event_date_end = models.DateTimeField('date and time event ends')
-    pub_date = models.DateTimeField('dateime event was added to database',auto_now_add=True)
+    pub_date = models.DateTimeField('dateime when event was added to database',auto_now_add=True)
+
     price = models.DecimalField(max_digits = 5, decimal_places = 2)
-    description = models.TextField(blank = True)
+
     image = models.ImageField(upload_to ='events/img/', blank = True)
-    artists = models.ManyToManyField(Artist)
+
+    artists = models.ManyToManyField(Artist, blank=True)
     location = models.ForeignKey('Location')
-    
+
+    fb_id = models.PositiveIntegerField(unique=True, null=True)
+    ra_id = models.PositiveIntegerField(unique=True, null=True)
+
+    published = models.BooleanField('Published')
+    gay = models.BooleanField('Gay party')
 
     #could use some more love
     def __unicode__(self):
@@ -132,18 +139,26 @@ class Location(models.Model):
         path = '/img/'+ instance.location_name +'/%Y/%m/' + sec + '_' + filename
         return path
     
-    pub_date = models.DateTimeField('dateime location was added to database',auto_now_add=True) 
+    pub_date = models.DateTimeField('dateime location was added to database',auto_now_add=True)
+
     location_name = models.CharField(max_length=200)
+    website = models.CharField(max_length=200, blank=True)
+    description = models.TextField()
+
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+
     street = models.CharField(max_length=200)
     postal_code = models.PositiveIntegerField()
     city = models.CharField(max_length=200)
     country_code = models.CharField('state', max_length=2, choices = COUNTRYS, default = GERMANY)
-    website = models.CharField(max_length=200, blank=True)
-    description = models.TextField()
+    
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
+
     fb_id = models.PositiveIntegerField(unique=True, null=True)
+    ra_id = models.PositiveIntegerField(unique=True, null=True)
+    
+    published = models.BooleanField('Published')
     
     def setAddress(self, street, postal_code, location_name):
         ## this can be deleted
@@ -154,21 +169,20 @@ class Location(models.Model):
         self.postal_code = postal_code
         self.location_name = location_name
 
-        #error aversion
-        #self.fb_id = 1
-
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
+    
     def setCoordinates(self):
         address = self.street + ', ' + self.postal_code + ' ' + self.city
         self.latitude, self.longitude = Geocoder.geocode(address).coordinates
+
 '''
 Name Abstraction Class will be used for machine learning
 Move this to artist??
 '''
 class ArtistNames(models.Model):
     name = models.CharField(max_length=200)
-    artist = models.ManyToManyField(Artist)
+    artist = models.ForeignKey(Artist)
     
     
     def __unicode__(self):
@@ -181,5 +195,3 @@ Unknown Genres will be saved here with a reference to the Artistsearch fftw3
 class unkownGenre(models.Model):
     name = models.CharField(max_length=200)
     soundcloud_id = models.PositiveIntegerField()
-    
-    

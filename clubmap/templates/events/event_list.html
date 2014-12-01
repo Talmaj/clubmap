@@ -1,39 +1,11 @@
 {% extends "events/base.html" %}
-{% load staticfiles %}
 
 {% block main %}
-
-<head>
-	<style>
-		html, body, #map-canvas {
-		margin: 20px;
-		padding: 5px;
-		height: 500px;
-		}
-		table {
-		margin-top: 20px;
-		margin-bottom: 100px
-		}
-	</style>
-	<link rel="stylesheet" type="text/css" href="{% static "events/mystyle.css" %}">
-</head>-->
 
 {% if events %}
 	<ul>
 		{% for event in events %}
-			<!--<li>{{event.event_name}} at {{ event.location.location_name }}</li>-->
-			<!--</head><body><table><tr><td width=40%>#-->
-			<div class='events'>
-				<h1 class='title'>{{ event.event_name }}</h1>
-				<h2 class='title2'></h2>
-				<h1 class='venue'>{{ event.location.location_name }}</h1>
-				<h2 class='address'>{{ event.location.street }}</h2>
-				<p class='time'>{{ event.start }} - {{ event.end }}</p>
-				<p class='price'>{{ event.price }}€</p>
-				<a href="http://www.residentadvisor.net/event.aspx?526666" class='link'>www.residentadvisor.net</a>
-			</div>
-
-
+			<li><a href="{% url 'events:detailEvent' event.id %}"> {{event.event_name}} at {{ event.location.location_name }}</a></li>
 		{% endfor %}
 	<ul>
 {% else %}
