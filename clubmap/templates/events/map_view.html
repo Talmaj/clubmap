@@ -1,0 +1,60 @@
+{% extends "events/base.html" %}
+{% load staticfiles %}
+
+
+{% block header_include %}
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.9"></script>
+
+	<link rel="stylesheet" href="{% static 'events/css/map.css' %}">
+	<!-- move the static part of the script to file -->
+	<script src="{% static 'events/js/gmaps.js' %}"></script>
+	<script> 
+	var map;
+	function initialize() {
+		//TODO set varibales like zoom and center global
+		var mapOptions = {
+					zoom: 12,
+					center: new google.maps.LatLng(52.52001, 13.40495)
+		};
+
+		map = new google.maps.Map(document.getElementById('main_map'),mapOptions);
+
+		{% if events %}
+			{% for event in events %}
+
+				var marker{{event.id}} = new google.maps.Marker({
+					position: new google.maps.LatLng({{event.location.latitude}},{{event.location.longitude}}),
+					map: map,
+					title: '{{ event.event_name }} @ {{ event.location.location_name }}'
+				});
+
+				google.maps.event.addListener(marker{{event.id}}, 'click', function() {
+				    map.setZoom(17);
+				    map.setCenter(marker{{event.id}}.getPosition());
+				    //call a ajax function here to display event as overlay
+				    //compute travel time to event
+				    alert("this would show {{ event.event_name }} ");
+				});
+
+			{% endfor %}
+
+		{% else %}
+			//grey out map here
+			//redirect user
+			alert("there are no events for this date");
+		{% endif %}
+	}
+
+	google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+{% endblock %}
+
+
+
+{% block background %}
+	
+	
+	<div id = "main_map" > </div>
+
+
+{% endblock %}

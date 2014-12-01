@@ -24,6 +24,13 @@ def index(request):
     context_dic = {'events':event_list}
     return render_to_response('events/event_list.html', context_dic, context)
 
+def mapView(request,day=0,month=0,year=0):
+    context = RequestContext(request)
+    event_list = Event.objects.order_by('event_date_start');
+    event_list = set_times(event_list) 
+    context_dic = {'events':event_list}
+    return render_to_response('events/map_view.html', context_dic, context)
+
 class EventDetailView(DetailView):
     model = Event
     template_name = "events/event_detail.html"
