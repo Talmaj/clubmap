@@ -7,7 +7,7 @@ venv/
 venv_ubuntu/
 
 #ignore migrations and settings
-clubmap/settings.py
+clubmap/clubmap/settings.py
 clubmap/events/migrations/
 
 # ignore emacs buffer files
