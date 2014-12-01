@@ -75,22 +75,47 @@ def save_to_db(container):
         location = Location(street=dc['address'], postal_code=dc['post'], 
                             city=dc['city'], location_name=dc['venue'])
         location.setCoordinates()
+        location.published = True
         location.postal_code = 0 if location.postal_code == '' else location.postal_code
-        location.save()
+        if(Location.objects.filter(location_name=dc['venue'], street=dc['address']).exists()):
+            print "location already exists"
+            #might work as long we stay in one city
+            location = Location.objects.get(location_name=dc['venue'], street=dc['address'])
+        else:
+            location.save()
         
         #saving event data
         event = Event(event_name=dc['title'], event_date_start=dc['start'], 
                         event_date_end=dc['end'], price=dc['price'], 
                         location=location)
-        event.save()
+        event.published = True
+        event.gay = False
+
+        if(Event.objects.filter(event_date_start=dc['start'], event_name = dc['title']).exists()):
+            print "event already exists in db";
+            event = Event.objects.get(event_date_start=dc['start'], event_name = dc['title']);
+        else:
+            event.save()
         
         #TODO check if already exists
         #saving artists data
         for performer in dc['line_up']:
-            artist = Artist(name=performer, ignore_sc=0)
+            artist = Artist(name=performer, ignore_sc=False)
             artist.get_sc_id()
-            artist.save()
+            if (artist.soundcloud_id != None):
+                if (Artist.objects.filter(soundcloud_id=artist.soundcloud_id).exists()):
+                    #artist already exists so to link the event we use the existing one
+                    artist = Artist.objects.get(soundcloud_id = artist.soundcloud_id)
+                else:
+                    #sc id is not in database add artist
+                    artist.save()
+            else:
+                #we don't have a sc_id check by name
+                if(Artist.objects.filter(name = artist.name).exists()):
+                    artist = Artist.objects.get(soundcloud_id = artist.soundcloud_id)
+                else:
+                    artist.save()
+            
             event.artists.add(artist)
-
     
     

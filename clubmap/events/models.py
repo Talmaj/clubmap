@@ -56,6 +56,8 @@ class Artist(models.Model):
                     print "genre not found {}".format(artist_genre)
                     unkown = unkownGenre(name=artist_genre, soundcloud_id=user.id)
                     unkown.save()
+        else:
+            return None;
 '''
 TODO:
 -Read this:
@@ -78,7 +80,7 @@ Event Model
 TODO:
 -Add Field Options for enhanced treatmend in validation and backend, see:
     https://docs.djangoproject.com/en/dev/ref/models/fields/#field-options
--File uploads not working
+-File uploads not working 
 
 '''  
 class Event(models.Model):
@@ -90,17 +92,24 @@ class Event(models.Model):
         return path
     
     event_name = models.CharField(max_length=200)
+    description = models.TextField(blank = True)
+    
     event_date_start = models.DateTimeField('date and time event starts')
     event_date_end = models.DateTimeField('date and time event ends')
-    pub_date = models.DateTimeField('dateime event was added to database',auto_now_add=True)
+    pub_date = models.DateTimeField('dateime when event was added to database',auto_now_add=True)
+
     price = models.DecimalField(max_digits = 5, decimal_places = 2)
-    description = models.TextField(blank = True)
+
     image = models.ImageField(upload_to ='events/img/', blank = True)
-    artists = models.ManyToManyField(Artist)
+
+    artists = models.ManyToManyField(Artist, blank=True)
     location = models.ForeignKey('Location')
-    gay = models.BooleanField('Gay party')
+
+    fb_id = models.PositiveIntegerField(unique=True, null=True)
+    ra_id = models.PositiveIntegerField(unique=True, null=True)
+
     published = models.BooleanField('Published')
-    
+    gay = models.BooleanField('Gay party')
 
     #could use some more love
     def __unicode__(self):
@@ -131,17 +140,24 @@ class Location(models.Model):
         return path
     
     pub_date = models.DateTimeField('dateime location was added to database',auto_now_add=True)
+
     location_name = models.CharField(max_length=200)
+    website = models.CharField(max_length=200, blank=True)
+    description = models.TextField()
+
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+
     street = models.CharField(max_length=200)
     postal_code = models.PositiveIntegerField()
     city = models.CharField(max_length=200)
     country_code = models.CharField('state', max_length=2, choices = COUNTRYS, default = GERMANY)
-    website = models.CharField(max_length=200, blank=True)
-    description = models.TextField()
+    
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
+
     fb_id = models.PositiveIntegerField(unique=True, null=True)
+    ra_id = models.PositiveIntegerField(unique=True, null=True)
+    
     published = models.BooleanField('Published')
     
     def setAddress(self, street, postal_code, location_name):
