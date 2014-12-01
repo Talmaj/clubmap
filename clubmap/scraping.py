@@ -14,7 +14,6 @@ def get_dc(dy, mn, yr, ai=34):
     for event in events:
         html = get_html(event)
         attr = find_attributes(html)
-        attr['ra_id'] = event
         dc += [clean_attributes(attr)]
     return dc
 
