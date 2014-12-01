@@ -1,0 +1,82 @@
+/* Importing fonts */
+@font-face {
+    font-family: 'SansExtraBold'; /*a name to be used later*/
+    src: url("fonts/the-sans-extra-bold-caps.ttf"); /*URL to font*/
+}
+@font-face {
+    font-family: 'SansSemiLightPlain'; /*a name to be used later*/
+    src: url("fonts/TheSans SemiLight Plain.ttf"); /*URL to font*/
+}
+@font-face {
+    font-family: 'SansSemiLightCaps'; /*a name to be used later*/
+    src: url("fonts/the-sans-semi-light-caps.ttf"); /*URL to font*/
+}
+@font-face {
+    font-family: 'SansB3LightItalic'; /*a name to be used later*/
+    src: url("fonts/TheSans B3 Light Italic.ttf"); /*URL to font*/
+}
+@font-face {
+    font-family: 'MyriadRoman'; /*a name to be used later*/
+    src: url("fonts/Myriad Roman.ttf"); /*URL to font*/
+}
+
+
+/* General stuff */
+h1 ,h2, p, a{margin: 0pt;
+	padding: 0pt;
+	font-weight: normal;
+	margin-left: 5px;
+	}
+a.link {color: #000000;
+		text-decoration: None;
+		font-family: SansB3LightItalic;
+		font-size:12.2pt;
+		margin-bottom: 5px}
+div.events{margin-bottom: 100px}
+
+
+
+	
+/* Headings design */
+h1.title{font-family: "SansExtraBold";
+		font-size: 20.4pt;
+		font-weight: normal;
+		text-transform: uppercase;
+		width: 500px;
+		/*padding-bottom:3.06pt;*/
+		letter-spacing:-0.8pt;
+		margin-bottom:5px;}
+		
+h2.title2{font-family: "SansSemiLightPlain";
+		font-size: 15.4pt;
+		font-weight: normal;
+		padding-bottom:2pt;
+		margin-bottom:15.9px;
+		}
+		
+h1.venue{font-family: "SansExtraBold";
+		font-size: 16.8pt;
+		/*font-weight: 900;*/
+		padding-bottom:7.4px;
+		
+		}
+h2.address{font-family: "SansSemiLightPlain";
+		font-size: 12.2pt;
+		font-weight: normal;
+		padding-bottom:2pt;
+		margin-bottom:19.8px;
+		}
+p.time {font-family: "SansSemiLightCaps";
+		font-size: 18.4pt;
+		/*font-weight: 300;*/
+		padding-bottom: 41px;
+		}
+p.price {font-family: "MyriadRoman";
+		font-size: 15.3pt;
+		padding-bottom: 3.06pt;
+		}
+
+
+
+
+p{font-family: "Times New Roman", font-size: 40px;}

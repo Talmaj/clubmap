@@ -8,10 +8,19 @@ from django.views.generic import ListView, DetailView
 import datetime
 from events.models import Event, Location, Artist
 
+def set_times(event_list):
+    '''
+    Formates time
+    '''
+    for event in event_list:
+        event.start = event.event_date_start.strftime('%H:%M') 
+        event.end = event.event_date_end.strftime('%H:%M')
+    return event_list
 
 def index(request):
     context = RequestContext(request)
     event_list = Event.objects.order_by('event_date_start');
+    event_list = set_times(event_list) 
     context_dic = {'events':event_list}
     return render_to_response('events/event_list.html', context_dic, context)
 
