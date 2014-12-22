@@ -29,8 +29,8 @@
 				});
 
 				google.maps.event.addListener(marker{{event.id}}, 'click', function() {
+				    map.panTo(marker{{event.id}}.getPosition());
 				    map.setZoom(17);
-				    map.setCenter(marker{{event.id}}.getPosition());
 				    //call a ajax function here to display event as overlay
 				    //compute travel time to event
 				    alert("this would show {{ event.event_name }} ");

@@ -5,6 +5,8 @@ import time
 import soundcloud 
 from collections import Counter
 from pygeocoder import Geocoder
+from django.db.models import Q
+import datetime
 
 client = soundcloud.Client(client_id='5b3cdaac22afb1d743aed0031918a90f')
 
@@ -78,11 +80,68 @@ class Genre(models.Model):
 '''
 Event Model
 TODO:
--Add Field Options for enhanced treatmend in validation and backend, see:
-    https://docs.djangoproject.com/en/dev/ref/models/fields/#field-options
 -File uploads not working 
-
 '''  
+class EventManager(models.Manager):
+    '''
+    Today's events
+    Returns todays event from now to now + 24h
+    '''
+    def today(self):
+        return self.from_date(datetime.datetime.now())
+
+    '''
+    Returns events of a certain day
+    '''
+    def from_date(self,start):
+        end = start + datetime.timedelta(days=1)
+        return self.from_range(start,end)
+    '''
+    Method to specific search events in given range
+    returns Events from start to end
+    '''
+    def from_range(self,start, end):
+        return self.filter(Q(event_date_start__range=(start, end)) | Q(event_date_end__range=(start, end)))
+
+    '''
+    This weekend
+    returns events of upcoming weekend next friday 00:00 till monday 12:00
+    '''
+    def weekend(self):
+        today = datetime.datetime.today();
+        if (today.weekday != 4 and  today.weekday != 5 and today.weekday != 6):
+            '''
+            Today is a weekday find next friday
+            '''
+            while (today.weekday() != 4):
+                today += datetime.timedelta(days=1)
+            friday = today;
+            monday = friday + timedelta(days = 3, hours = 12)
+            return self.from_range(friday,monday)
+        else:
+            '''
+            During the weekend return the remaining events
+            '''
+            monday = datetime.datetime.today()
+            while(monday.weekday() != 0):
+                monday += datetime.timedelta(days=1)
+            monday += datetime.timedelta(hours=12)
+            start = datetime.datetime.now() 
+            return self.from_range(start, monday)
+
+
+    '''
+    This week
+    returns events of from current day of week till monday 12:00
+    '''
+    def week(self):
+        start = datetime.datetime.today()
+        end = start + datetime.timedelta(days=1, hours=12)
+        while (end.weekday() != 0):
+            end += datetime.timedelta(days=1)
+        return self.from_range(start,end)
+
+
 class Event(models.Model):
     
     #File gets validated by ImageField if uploaded through backend upload using script must handle validation itself
@@ -110,6 +169,20 @@ class Event(models.Model):
 
     published = models.BooleanField('Published')
     gay = models.BooleanField('Gay party')
+
+    objects = EventManager()
+
+    def as_dic(self):
+        artists = [artist.soundcloud_id for artist in self.artists.all()]
+        artists = filter(None, artists)
+        return {
+            "id" : self.id,
+            "name" : self.event_name,
+            "location": self.location.location_name,
+            "lat" : self.location.latitude,
+            "long": self.location.longitude,
+            "artists" : artists
+        }
 
     #could use some more love
     def __unicode__(self):
