@@ -116,7 +116,7 @@ class EventManager(models.Manager):
             while (today.weekday() != 4):
                 today += datetime.timedelta(days=1)
             friday = today;
-            monday = friday + timedelta(days = 3, hours = 12)
+            monday = friday + datetime.timedelta(days = 3, hours = 12)
             return self.from_range(friday,monday)
         else:
             '''
