@@ -14,151 +14,151 @@
  * TODO merge data and playlist together so data is consistent in one place
  */
 (function ($) {
-	$.widget( "cm.scplayer", {
-	 	
-	 	/* ==================
-	 	 * public parameters
-	 	 * ==================
-	 	 * 
-	 	 * client id: 5b3cdaac22afb1d743aed0031918a90f
-	 	 * artists are given from django
-	 	 */
-	    options: {
-			client_id: 0,
-			data:[],
-			playlist_container: null,
-			control_container:null,
-			map_container: this.element,
-			event_container: null,
-			map_options: {
-				zoom: 12,
-				center: new google.maps.LatLng(52.52001, 13.40495),
-				mapTypeId: google.maps.MapTypeId.HYBRID
-			}
-	    },
+    $.widget( "cm.scplayer", {
+        
+        /* ==================
+         * public parameters
+         * ==================
+         * 
+         * client id: 5b3cdaac22afb1d743aed0031918a90f
+         * artists are given from django
+         */
+        options: {
+            client_id: 0,
+            data:[],
+            playlist_container: null,
+            control_container:null,
+            map_container: this.element,
+            event_container: null,
+            map_options: {
+                zoom: 12,
+                center: new google.maps.LatLng(52.52001, 13.40495),
+                mapTypeId: google.maps.MapTypeId.HYBRID
+            }
+        },
 
-		_create: function(){
-			/*=================
-			 * Private variables
-			 * ================
-			 */
-	    	
-	    	//a list with the current playlist based on artists
-			//this.playlist = [];
-			//a list of html elements which represent the playlist in the DOM
-			//this.playlist_el = []
-			//current index of playlist
-			this.current = 0;
-			//current soundManager object
-			this.current_sound = null;
-			//img elements with waveform information
-			this.timeline = null;
-			//waveform object
-			this.waveform = null;
-			//progress element
-			this.progress = null;
-			//actual playback position
-			this.position = null;
-			//total time
-			this.end = null;
-			//map handler
-			this.map = null;
-			//helper variable to save current event id
-			this.current_party = 0;
-			/*=================
-			 * Constructor
-			 * ================
-			 */
-			SC.initialize({client_id:this.options.client_id});
-			var me = this;
+        _create: function(){
+            /*=================
+             * Private variables
+             * ================
+             */
+            
+            //a list with the current playlist based on artists
+            //this.playlist = [];
+            //a list of html elements which represent the playlist in the DOM
+            //this.playlist_el = []
+            //current index of playlist
+            this.current = 0;
+            //current soundManager object
+            this.current_sound = null;
+            //img elements with waveform information
+            this.timeline = null;
+            //waveform object
+            this.waveform = null;
+            //progress element
+            this.progress = null;
+            //actual playback position
+            this.position = null;
+            //total time
+            this.end = null;
+            //map handler
+            this.map = null;
+            //helper variable to save current event id
+            this.current_party = 0;
+            /*=================
+             * Constructor
+             * ================
+             */
+            SC.initialize({client_id:this.options.client_id});
+            var me = this;
             var user_tracks = [];
             var def = [];
             
             //search for best tracks for each user
             jQuery.each(me.options.data, function(data_index, party){
-            	var dfd = $.Deferred();
-            	party.tracks = [];
-		        jQuery.each(party.artists, function(index, id){
-					
-					//gets all tracks based on user id
-					SC.get("/tracks", {user_id: id}, function (tracks) {
-	
-						user_tracks = tracks;
-						
-						//sort all tracks
-						user_tracks.sort(function (b, a) {
-							//sort tracks by score
-							var scoreA = a.download_count + a.playback_count + 2 * a.favoritings_count;
-							var scoreB = b.download_count + b.playback_count + 2 * b.favoritings_count;
-							return scoreA - scoreB;
-						});
-						
-						//merge lists faster
-						  
-						$.merge(party.tracks, user_tracks.slice(0,3));
-						
-						//experimental manage tracks exclusivly using options.data.
-						//this.options.data[data_index].tracks = user_tracks.slice(0,3);
-						
-						/*
-						 * alternative quick approach save corresponding party id for each track. Solution above might bring performance improvement.
-						 *
-							jQuery.each(user_tracks, function(track_index, track){
-								track.party_id = data_index;
-								me.playlist.push(track);
-							});
-						*/
-						
-						dfd.resolve();
-					});
-					def.push(dfd.promise());
-					
-		        });
-	        });
-	        $.when.apply($, def).done(function(){
-	        	me.createUI();
-	        	me.createMap();
-	        	me.waveform = new Waveform({
-	        		container: $(me.progress)[0],	
-	        		outerColor: "rgba(0,0,0,0)",
-	        		innerColor:function(x,y){
-	        			if(1){
-							  if (x < me.current_sound.position / me.current_sound.durationEstimate) {
-							    return "rgba(255,  30, 102, 0.8)";
-							  } else if (x < me.current_sound.bytesLoaded / me.current_sound.bytesTotal) {
-							    return "rgba(255, 255, 255, 0.8)";
-							  } else {
-							    return "rgba(100, 100, 100, 0.4)";
-							  }
-					  } else {
-					  	return "rgba(0, 0, 0, 0)"
-					  }
-	        	}
-	        	});	        	
-	        });
-			//me.createUI();
-		},
-		
-		/*
-		 * ========
-		 * Goes to previous track in playlist
-		 * ========
-		 */
-		previous: function () {
-			var me = this;
-			var next = me.current - 1;
-			var next_party = me.current_party;
-			
+                var dfd = $.Deferred();
+                party.tracks = [];
+                jQuery.each(party.artists, function(index, id){
+                    
+                    //gets all tracks based on user id
+                    SC.get("/tracks", {user_id: id}, function (tracks) {
+    
+                        user_tracks = tracks;
+                        
+                        //sort all tracks
+                        user_tracks.sort(function (b, a) {
+                            //sort tracks by score
+                            var scoreA = a.download_count + a.playback_count + 2 * a.favoritings_count;
+                            var scoreB = b.download_count + b.playback_count + 2 * b.favoritings_count;
+                            return scoreA - scoreB;
+                        });
+                        
+                        //merge lists faster
+                          
+                        $.merge(party.tracks, user_tracks.slice(0,3));
+                        
+                        //experimental manage tracks exclusivly using options.data.
+                        //this.options.data[data_index].tracks = user_tracks.slice(0,3);
+                        
+                        /*
+                         * alternative quick approach save corresponding party id for each track. Solution above might bring performance improvement.
+                         *
+                            jQuery.each(user_tracks, function(track_index, track){
+                                track.party_id = data_index;
+                                me.playlist.push(track);
+                            });
+                        */
+                        
+                        dfd.resolve();
+                    });
+                    def.push(dfd.promise());
+                    
+                });
+            });
+            $.when.apply($, def).done(function(){
+                me.createUI();
+                me.createMap();
+                me.waveform = new Waveform({
+                    container: $(me.progress)[0],   
+                    outerColor: "rgba(0,0,0,0)",
+                    innerColor:function(x,y){
+                        if(1){
+                              if (x < me.current_sound.position / me.current_sound.durationEstimate) {
+                                return "rgba(255,  30, 102, 0.8)";
+                              } else if (x < me.current_sound.bytesLoaded / me.current_sound.bytesTotal) {
+                                return "rgba(255, 255, 255, 0.8)";
+                              } else {
+                                return "rgba(100, 100, 100, 0.4)";
+                              }
+                      } else {
+                        return "rgba(0, 0, 0, 0)"
+                      }
+                }
+                });             
+            });
+            //me.createUI();
+        },
+        
+        /*
+         * ========
+         * Goes to previous track in playlist
+         * ========
+         */
+        previous: function () {
+            var me = this;
+            var next = me.current - 1;
+            var next_party = me.current_party;
+            
             if (next < 0) {
-            	//go to previous party
-            	next_party = next_party-1;
+                //go to previous party
+                next_party = next_party-1;
                 while (me.options.data[next_party].tracks.length <= 0 && next_party > -1){
                     next_party = next_party - 1;
                 }
-            	if(next_party < 0){
-            		next_party = data.length-1;
-            	}
-            	next = me.options.data[next_party].tracks.length-1;
+                if(next_party < 0){
+                    next_party = data.length-1;
+                }
+                next = me.options.data[next_party].tracks.length-1;
             }
             
             if (me.current_sound !== null) { me.current_sound.destruct(); }
@@ -170,38 +170,38 @@
             
             //If party changed move into the middle of playlist
             if(me.current_party !== next_party) {
-                me.movePlaylistToEvent(next_party); 
+                me.movePlaylistToEvent(next_party,500); 
             }            
             
-        	me.current = next;
-			me.current_party = next_party;
-			me.play();
-			
-			
-		},
-		/*
-		 * ========
-		 * Goes to next track in playlist
-		 * This method is called at the end of each track automatically
-		 * ========
-		 */
-		next: function () {
-			var me = this;
-			var next = me.current + 1;
-			var next_party = me.current_party;
-			
+            me.current = next;
+            me.current_party = next_party;
+            me.play();
+            
+            
+        },
+        /*
+         * ========
+         * Goes to next track in playlist
+         * This method is called at the end of each track automatically
+         * ========
+         */
+        next: function () {
+            var me = this;
+            var next = me.current + 1;
+            var next_party = me.current_party;
+            
             if(next >= me.options.data[me.current_party].tracks.length){
-            	//go to next party
-            	
-            	next_party = next_party+1;
-            	while (me.options.data[next_party].tracks.length <= 0 && next_party < me.options.data.length){
-            	    next_party = next_party + 1;
-            	    //TODO move playlist to party
-            	}
-            	if(next_party >= me.options.data.length){
-            		next_party = 0;
-            	}
-            	next = 0;
+                //go to next party
+                
+                next_party = next_party+1;
+                while (me.options.data[next_party].tracks.length <= 0 && next_party < me.options.data.length){
+                    next_party = next_party + 1;
+                    //TODO move playlist to party
+                }
+                if(next_party >= me.options.data.length){
+                    next_party = 0;
+                }
+                next = 0;
             }
             
             if(me.current_sound != null) me.current_sound.destruct();
@@ -212,235 +212,242 @@
             
             //If party changed move into the middle of playlist
             if(me.current_party !== next_party) {
-                me.movePlaylistToEvent(next_party); 
+                me.movePlaylistToEvent(next_party,500); 
             }
             
-        	me.current = next;
-			me.current_party = next_party;
-			me.play();			
-		},
-		
-		goTo:function(pi,ti){
-			var me = this;
-			
+            me.current = next;
+            me.current_party = next_party;
+            me.play();          
+        },
+        
+        goTo:function(pi,ti){
+            var me = this;
+            
             if( (pi >= 0 && pi < me.options.data.length) && 
                 (ti >= 0 && ti < me.options.data[pi].tracks.length) ){
-                	
-                	if(me.current_sound != null) me.current_sound.destruct();
-                	me.current_sound = null;
-                	                	
+                    
+                    if(me.current_sound != null) me.current_sound.destruct();
+                    me.current_sound = null;
+                                        
                     me.options.data[me.current_party].playlist_el.removeClass("active");
                     me.options.data[me.current_party].tracks[me.current].playlist_el.removeClass("active")
-                	
-                	//If party changed move into the middle of playlist
-                	if(me.current_party !== pi) {
-                	    me.movePlaylistToEvent(pi); 
-                	}
-                	me.current = ti;
-					me.current_party = pi;
-					
-					me.play();
-			
-			} else {
-				console.log("ERROR: track index is out of bounds "+pi+', '+ti);
-			}
-		},
-		/*
-		 * ======
-		 * This funciton is called periodically while a track is playing and updates waveform and times
-		 * ======
-		 */
-		updateTimeline:function(){
-			var me = this;
-			/*
-			var pos = ((me.current_sound.position/me.current_sound.durationEstimate)*100)+"%";
-			console.log(me.current_sound.position);
-			me.progress.css("width",pos);
-			*/
-			me.waveform.redraw();
-		},
-		loadingCallback:function(){
-			var me = this;
-			me.waveform.redraw();
-		},
-		/*
-		 * ======
-		 * Plays or pauses a track depending of the state the player is in
-		 * ======
-		 */
-		play: function(){
+                    
+                    //If party changed move into the middle of playlist
+                    if(me.current_party !== pi) {
+                        me.movePlaylistToEvent(pi,500); 
+                    }
+                    me.current = ti;
+                    me.current_party = pi;
+                    
+                    me.play();
+            
+            } else {
+                console.log("ERROR: track index is out of bounds "+pi+', '+ti);
+            }
+        },
+        /*
+         * ======
+         * This funciton is called periodically while a track is playing and updates waveform and times
+         * ======
+         */
+        updateTimeline:function(){
+            var me = this;
+            /*
+            var pos = ((me.current_sound.position/me.current_sound.durationEstimate)*100)+"%";
+            console.log(me.current_sound.position);
+            me.progress.css("width",pos);
+            */
+            me.waveform.redraw();
+        },
+        loadingCallback:function(){
+            var me = this;
+            me.waveform.redraw();
+        },
+        /*
+         * ======
+         * Plays or pauses a track depending of the state the player is in
+         * ======
+         */
+        play: function(){
             
             var me = this;
             console.log(me.options.data);
             if (me.current_sound === null) {
-				//nothin is playing so when stream is ready play new sound
-				console.log(me.current_party, me.current);
-				SC.stream("/tracks/"+me.options.data[me.current_party].tracks[me.current].id,{preferFlash:false, useHTML5Audio:true, whileloading:function(){me.loadingCallback()}, whileplaying:function(){me.updateTimeline();}, onfinish:function(){me.next();}} , function(sound){
-					me.current_sound = sound;	
-					me.current_sound.play();
-					me.playing = true;
-				});
-				me.options.data[me.current_party].playlist_el.addClass("active");
-				me.options.data[me.current_party].tracks[me.current].playlist_el.addClass("active");
-				//me.playlist_el[me.current].addClass("active");
-				me.moveMapToEvent(me.current_party);
-				me.updateWaveform();
-				me.end.text(me.current_sound.durationEstimate);
-			} else {
-				me.current_sound.togglePause();
-			}
+                //nothin is playing so when stream is ready play new sound
+                console.log(me.current_party, me.current);
+                SC.stream("/tracks/"+me.options.data[me.current_party].tracks[me.current].id,{preferFlash:false, useHTML5Audio:true, whileloading:function(){me.loadingCallback()}, whileplaying:function(){me.updateTimeline();}, onfinish:function(){me.next();}} , function(sound){
+                    me.current_sound = sound;   
+                    me.current_sound.play();
+                    me.playing = true;
+                });
+                me.options.data[me.current_party].playlist_el.addClass("active");
+                me.options.data[me.current_party].tracks[me.current].playlist_el.addClass("active");
+                //me.playlist_el[me.current].addClass("active");
+                me.moveMapToEvent(me.current_party);
+                me.updateWaveform();
+                me.end.text(me.current_sound.durationEstimate);
+            } else {
+                me.current_sound.togglePause();
+            }
             //this.element.text('playing');
-		},
-		
-		/*
-		 * =====
-		 * updates the waveform in both containers to the current track.
-		 * =====
-		 */
-		updateWaveform: function (){
-			
-			var me = this;
-			me.waveform.dataFromSoundCloudTrack(me.options.data[me.current_party].tracks[me.current]);
-			/*
-			me.progress.css("width",0);
-			var path = me.playlist[me.current].waveform_url;
-			me.waveform.attr("src",path);*/
-			
-		},
-		
-		/*
-		 * ======
-		 * Initialize google map
-		 * ======
-		 */
-		createMap:function(){
-			
-			var me = this;
-			me.map = new google.maps.Map(document.getElementById('main_map'), me.options.map_options);
-			
-			//create markers on map
-			jQuery.each(this.options.data, function (index, party){
-				party.marker = new google.maps.Marker({
-					position: new google.maps.LatLng(party.lat, party.long),
-					map: me.map,
-					title: party.name + ' @ ' + party.location
-				});
-				
-				//add behaviour to marker
-				google.maps.event.addListener(party.marker, 'click', function(){
-					me.map.panTo(party.marker.getPosition());
-					me.map.setZoom(17);
-					
-					//TODO call ajax code to display event overlay
-				});
-			})
-			
-		},
-		
-		updateEventVisibility: function(){
-		    var me = this;
-		    var bounds = me.map.getBounds();
+        },
+        
+        /*
+         * =====
+         * updates the waveform in both containers to the current track.
+         * =====
+         */
+        updateWaveform: function (){
+            
+            var me = this;
+            me.waveform.dataFromSoundCloudTrack(me.options.data[me.current_party].tracks[me.current]);
+            /*
+            me.progress.css("width",0);
+            var path = me.playlist[me.current].waveform_url;
+            me.waveform.attr("src",path);*/
+            
+        },
+        
+        /*
+         * ======
+         * Initialize google map
+         * ======
+         */
+        createMap:function(){
+            
+            var me = this;
+            me.map = new google.maps.Map(document.getElementById('main_map'), me.options.map_options);
+            
+            google.maps.event.addListener(me.map, 'bounds_changed',function(){
+                me.updatePlaylist();
+            } );
+            
+            //create markers on map
+            jQuery.each(this.options.data, function (index, party){
+                party.marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(party.lat, party.long),
+                    map: me.map,
+                    title: party.name + ' @ ' + party.location
+                });
+                
+                //add behaviour to marker
+                google.maps.event.addListener(party.marker, 'click', function(){
+                    me.map.panTo(party.marker.getPosition());
+                    me.map.setZoom(17);
+                    
+                    //TODO call ajax code to display event overlay
+                });
+            })
+            
+        },
+        
+        updateEventVisibility: function(){
+            var me = this;
+            var bounds = me.map.getBounds();
+            console.log(me.options.data);
             jQuery.each(me.options.data, function(data_index, party){
-                if(bounds.contain(party.marker)){
+                if(bounds.contains(party.marker.getPosition())){
                     party.visible = true;
-                }  
+                }  else {
+                    party.visible = false;
+                }
             });
-		},
-		
-		loadEvent:function(id){
-			
-			var me = this;
-			var el = me.options.event_container;
-			
-			//TODO load event from django to display extended information incl. artwork
-			
-		},
-		
-		moveMapToEvent:function(id){
-			
-			var me = this;
-			var coord = new google.maps.LatLng(me.options.data[id].lat, me.options.data[id].long);
-			me.map.panTo(coord);
-			
-		},
-		
-		movePlaylistToEvent:function(id){
-		    
-		  var me = this;
-		  var el = me.options.data[id].playlist_el;
-		  var playlist = me.options.playlist_container;
-		  
-		  playlist.animate({
-		      scrollTop: el.position().top
-		      },500);
-		},
-		
-		/*
-		 * =======
-		 * Creates the user interface
-		 * =======
-		 */
-		createUI: function(){
-			var me = this;
-			var el = me.options.playlist_container;
-			var ctrl = $('<div></div>', {
-				class:'cm_player ctrl'
-			});
-			
-			var prev = $('<div></div>', {
-				class:'cm_player btn prev'
-			}).appendTo(ctrl).text("<<");
-			prev.click(function(){me.previous();});
-			
-			var play = $('<div></div>', {
-				class:'cm_player btn play'
-			}).appendTo(ctrl).text(">");
-			//bind to play 
-			play.click(function(){me.play();});
-			
-			var next = $('<div></div>', {
-				class:'cm_player btn next'
-			}).appendTo(ctrl).text(">>");
-			next.click(function(){me.next();});
-			//info button
-			
-			me.timeline = $('<div></div>', {
-				class:'cm_player timeline'
-			}).appendTo(ctrl);
-			 
-			//function to navigate through track
-			me.timeline.click(function(e){
-				var offset = $(this).offset();
-				var percent = (e.pageX - offset.left)/$(this).width();
-				console.log("jump to" + Math.floor(percent*me.current_sound.durationEstimate)); 
-				me.current_sound.setPosition(Math.floor(percent*me.current_sound.durationEstimate));
-			});
-			
-			me.progress = $('<div></div>', {
-				class:'cm_player progress'
-			}).appendTo(me.timeline);
-			
-			//me.waveform = $('<img/>', {class:'cm_player waveform'}).appendTo(timeline)
-			
-			//TODO
-			var position = $('<div></div>', {
-				class:'cm_player position'
-			}).appendTo(me.timeline);
-			
-			//TODO
-			me.end = $('<div></div>', {
-				class:'cm_player end'
-			}).appendTo(me.timeline);
-			
-			//create Plalist
-			me.createPlaylist();
-			ctrl.appendTo(me.options.control_container);
-		},
-		
-		createPlaylist: function(){
-		    var me = this;
-		    
-		    var playlist_wrapper = $('<div></div>', {
+        },
+        
+        loadEvent:function(id){
+            
+            var me = this;
+            var el = me.options.event_container;
+            
+            //TODO load event from django to display extended information incl. artwork
+            
+        },
+        
+        moveMapToEvent:function(id){
+            
+            var me = this;
+            var coord = new google.maps.LatLng(me.options.data[id].lat, me.options.data[id].long);
+            me.map.panTo(coord);
+            
+        },
+        
+        movePlaylistToEvent:function(id,delay){
+            
+          var me = this;
+          var el = me.options.data[id].playlist_el;
+          var playlist = me.options.playlist_container;
+          
+          playlist.animate({
+              scrollTop: el.position().top
+              },delay);
+        },
+        
+        /*
+         * =======
+         * Creates the user interface
+         * =======
+         */
+        createUI: function(){
+            var me = this;
+            var el = me.options.playlist_container;
+            var ctrl = $('<div></div>', {
+                class:'cm_player ctrl'
+            });
+            
+            var prev = $('<div></div>', {
+                class:'cm_player btn prev'
+            }).appendTo(ctrl).text("<<");
+            prev.click(function(){me.previous();});
+            
+            var play = $('<div></div>', {
+                class:'cm_player btn play'
+            }).appendTo(ctrl).text(">");
+            //bind to play 
+            play.click(function(){me.play();});
+            
+            var next = $('<div></div>', {
+                class:'cm_player btn next'
+            }).appendTo(ctrl).text(">>");
+            next.click(function(){me.next();});
+            //info button
+            
+            me.timeline = $('<div></div>', {
+                class:'cm_player timeline'
+            }).appendTo(ctrl);
+             
+            //function to navigate through track
+            me.timeline.click(function(e){
+                var offset = $(this).offset();
+                var percent = (e.pageX - offset.left)/$(this).width();
+                console.log("jump to" + Math.floor(percent*me.current_sound.durationEstimate)); 
+                me.current_sound.setPosition(Math.floor(percent*me.current_sound.durationEstimate));
+            });
+            
+            me.progress = $('<div></div>', {
+                class:'cm_player progress'
+            }).appendTo(me.timeline);
+            
+            //me.waveform = $('<img/>', {class:'cm_player waveform'}).appendTo(timeline)
+            
+            //TODO
+            var position = $('<div></div>', {
+                class:'cm_player position'
+            }).appendTo(me.timeline);
+            
+            //TODO
+            me.end = $('<div></div>', {
+                class:'cm_player end'
+            }).appendTo(me.timeline);
+            
+            //create Plalist
+            me.createPlaylist();
+            ctrl.appendTo(me.options.control_container);
+        },
+        
+        createPlaylist: function(){
+            var me = this;
+            
+            var playlist_wrapper = $('<div></div>', {
                 class:'cm_player playlist'
             });
             
@@ -451,8 +458,12 @@
             
             //create playlist
             jQuery.each(me.options.data ,function(di, party){
-                if(party.tracks.length > 0){
+                if(party.tracks.length > 0 ){
                     
+                   // var el = me.createEvent(di);
+                    me.createEvent(di).appendTo(party_ul);
+                    
+                    /*
                     party.playlist_el = $('<li class = "event" ><div class="event_info"><span class = "cm_player index">' + (di+1) + '</span> <span class="cm_player name">'+ party.name +'</span> <span class="cm_player location">' + party.location + '</span></div></li>').appendTo(party_ul);
                     party.playlist_el.hover(function(){
                        party.playlist_el.toggleClass('hovered',250, "swing");
@@ -475,19 +486,96 @@
                             });
                         me.options.data[di].tracks[ti].playlist_el = li;
                     });
+                    */
                 }
             });
-		    playlist_wrapper.appendTo(me.options.playlist_container);
-		},
-		
-		updatePlaylist: function(){
-		    var me = this;
-		    //TODO Hide and unhide playlist while updating
-		    
-		}
-		
+            playlist_wrapper.appendTo(me.options.playlist_container);
+        },
+        
+        updatePlaylist: function(){
+            
+            //TODO special case only one and empty
+            var me = this;
+            me.updateEventVisibility();
+            
+            var lastVisible = $('.playlist ul li').first();
+            var firstIndex = lastVisible.data('id');
+            //TODO Hide and unhide playlist while updating
+            jQuery.each(me.options.data ,function(di, party){
+                //current playing party is not touched
+                if (di != me.current_party && party.tracks.length > 0){
+                    //REMOVE EVENT if is not visible but has dom element
+                    if(party.visible == false && party.playlist_el != null){
+                        me.removeEvent(di);
+                        me.movePlaylistToEvent(me.current_party,100);
+                    } 
+                    //ADD EVENT if visible but has NO dom element
+                    else if ( party.visible == true && party.playlist_el == null) {
+                        var el = me.createEvent(di);
+                        if(party.id < firstIndex){
+                            //insert at beginning
+                            firstIndex = party.id;
+                            el.insertBefore($('.playlist ul li').first());
+                        } else {
+                            //insert after last visible
+                            el.insertAfter(lastVisible);
+                        }
+                        me.movePlaylistToEvent(me.current_party,100);
+                        lastVisible = el;
+                        
+                    }
+                    //UPDATE VARIABLES update last visible if party is already visible
+                    if(party.visible = true && party.playlist_el != null){
+                        lastVisible = party.playlist_el;
+                    }
+                }
+                
+            });
+            
+            
+        },
+        
+        removeEvent: function(di){
+            var me = this;
+            me.options.data[di].playlist_el.remove();
+            me.options.data[di].playlist_el = null;
+        },
+        /*
+         * creates an Event and saves the element in data
+         * WARNING: DANGEROUS saves el into data before inserting into dom
+         */
+        createEvent: function(di){
+            var me = this;
+            var ev = me.options.data[di];
+            ev.playlist_el = $('<li class = "event" ><div class="event_info"><span class = "cm_player index">' + ev.id + '</span> <span class="cm_player name">'+ ev.name +'</span> <span class="cm_player location">' + ev.location + '</span></div></li>');
+            ev.playlist_el.data('id',ev.id);
+            ev.playlist_el.hover(function(){
+                ev.playlist_el.toggleClass('hovered',250, "swing");
+            });
+            var playlist_ul = $('<ul></ul>', {
+                class:'cm_player playlist'
+            }).appendTo(ev.playlist_el);
+            
+            jQuery.each(ev.tracks, function(ti, track){
+                var shading;
+                if (ti % 2 == 0){ 
+                    shading = "even"; 
+                } else { 
+                    shading = "odd"; 
+                }
+                var li = $('<li class = "track ' + shading + '" ><span class = "cm_player index">' + (ti+1) + '</span> <span class="cm_player t_title">'+ track.title +'</span> <span class="cm_player artist">' + track.user.username + '</span></li>').appendTo(playlist_ul);
+                li.click(function(){ 
+                    me.goTo(di,ti); 
+                    //li.addClass("active");
+                    });
+                ev.tracks[ti].playlist_el = li;
+            });
+            
+            return ev.playlist_el;
+        }
+        
 
-	});
+    });
 }(jQuery));
 
 
@@ -502,14 +590,14 @@ $(function($) {
     //SC.initialize({client_id:'5b3cdaac22afb1d743aed0031918a90f'});
     /*
     $.getJSON('http://127.0.0.1:8000/ajax/11/11/2000/',function(data){
-    	console.log(data);
+        console.log(data);
     });
     */
    
     sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), data:data, playlist_container:$('#playlist'), event_container:$('#event_display') });
     SC.whenStreamingReady(function(){
-    	//build interface
-    	console.log("ready to stream");
+        //build interface
+        console.log("ready to stream");
     });
 });
 
