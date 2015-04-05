@@ -76,16 +76,16 @@
             
             //search for best tracks for each user
             jQuery.each(me.options.data, function(data_index, party){
-                var dfd = $.Deferred();
                 party.tracks = [];
+
                 jQuery.each(party.artists, function(index, id){
-                    
+                    var dfd = $.Deferred();
                     //gets all tracks based on user id
                     SC.get("/tracks", {user_id: id}, function (tracks) {
     
                         user_tracks = tracks;
                         
-                        //sort all tracks
+                        //sort all tracks   
                         user_tracks.sort(function (b, a) {
                             //sort tracks by score
                             var scoreA = a.download_count + a.playback_count + 2 * a.favoritings_count;
@@ -96,19 +96,7 @@
                         //merge lists faster
                           
                         $.merge(party.tracks, user_tracks.slice(0,3));
-                        
-                        //experimental manage tracks exclusivly using options.data.
-                        //this.options.data[data_index].tracks = user_tracks.slice(0,3);
-                        
-                        /*
-                         * alternative quick approach save corresponding party id for each track. Solution above might bring performance improvement.
-                         *
-                            jQuery.each(user_tracks, function(track_index, track){
-                                track.party_id = data_index;
-                                me.playlist.push(track);
-                            });
-                        */
-                        
+                        console.log("done getting tracks");
                         dfd.resolve();
                     });
                     def.push(dfd.promise());
@@ -151,13 +139,18 @@
             
             if (next < 0) {
                 //go to previous party
-                next_party = next_party-1;
-                while (me.options.data[next_party].tracks.length <= 0 && next_party > -1){
+                //next_party = next_party-1;
+                do {
                     next_party = next_party - 1;
-                }
-                if(next_party < 0){
-                    next_party = data.length-1;
-                }
+                    if(next_party < 0){
+                        next_party = data.length-1;
+                    }
+                    
+                    if(next_party == me.current_party){
+                        break;
+                    }
+                } while (me.options.data[next_party].tracks.length <= 0 || me.options.data[next_party].visible == false);
+
                 next = me.options.data[next_party].tracks.length-1;
             }
             
@@ -193,14 +186,16 @@
             if(next >= me.options.data[me.current_party].tracks.length){
                 //go to next party
                 
-                next_party = next_party+1;
-                while (me.options.data[next_party].tracks.length <= 0 && next_party < me.options.data.length){
+                //next_party = next_party+1;
+                do{
                     next_party = next_party + 1;
-                    //TODO move playlist to party
-                }
-                if(next_party >= me.options.data.length){
-                    next_party = 0;
-                }
+                    if(next_party >= me.options.data.length){
+                        next_party = 0;
+                    }
+                    if (next_party == me.current_party){
+                        break;
+                    }
+                } while (me.options.data[next_party].tracks.length <= 0 || me.options.data[next_party].visible == false);
                 next = 0;
             }
             
@@ -344,7 +339,6 @@
         updateEventVisibility: function(){
             var me = this;
             var bounds = me.map.getBounds();
-            console.log(me.options.data);
             jQuery.each(me.options.data, function(data_index, party){
                 if(bounds.contains(party.marker.getPosition())){
                     party.visible = true;
@@ -440,13 +434,14 @@
             }).appendTo(me.timeline);
             
             //create Plalist
+            console.log("creating playlist");
             me.createPlaylist();
             ctrl.appendTo(me.options.control_container);
         },
         
         createPlaylist: function(){
             var me = this;
-            
+            console.log('data',me.options.data)
             var playlist_wrapper = $('<div></div>', {
                 class:'cm_player playlist'
             });
@@ -458,78 +453,32 @@
             
             //create playlist
             jQuery.each(me.options.data ,function(di, party){
-                if(party.tracks.length > 0 ){
-                    
-                   // var el = me.createEvent(di);
                     me.createEvent(di).appendTo(party_ul);
-                    
-                    /*
-                    party.playlist_el = $('<li class = "event" ><div class="event_info"><span class = "cm_player index">' + (di+1) + '</span> <span class="cm_player name">'+ party.name +'</span> <span class="cm_player location">' + party.location + '</span></div></li>').appendTo(party_ul);
-                    party.playlist_el.hover(function(){
-                       party.playlist_el.toggleClass('hovered',250, "swing");
-                    });
-                    var playlist_ul = $('<ul></ul>', {
-                        class:'cm_player playlist'
-                    }).appendTo(party.playlist_el);
-                    
-                    jQuery.each(party.tracks, function(ti, track){
-                        var shading;
-                        if (ti % 2 == 0){ 
-                            shading = "even"; 
-                        } else { 
-                            shading = "odd"; 
-                        }
-                        var li = $('<li class = "track ' + shading + '" ><span class = "cm_player index">' + (ti+1) + '</span> <span class="cm_player t_title">'+ track.title +'</span> <span class="cm_player artist">' + track.user.username + '</span></li>').appendTo(playlist_ul);
-                        li.click(function(){ 
-                            me.goTo(di,ti); 
-                            //li.addClass("active");
-                            });
-                        me.options.data[di].tracks[ti].playlist_el = li;
-                    });
-                    */
-                }
             });
             playlist_wrapper.appendTo(me.options.playlist_container);
         },
         
         updatePlaylist: function(){
             
-            //TODO special case only one and empty
             var me = this;
             me.updateEventVisibility();
             
-            var lastVisible = $('.playlist ul li').first();
-            var firstIndex = lastVisible.data('id');
-            //TODO Hide and unhide playlist while updating
             jQuery.each(me.options.data ,function(di, party){
-                //current playing party is not touched
-                if (di != me.current_party && party.tracks.length > 0){
-                    //REMOVE EVENT if is not visible but has dom element
-                    if(party.visible == false && party.playlist_el != null){
-                        me.removeEvent(di);
-                        me.movePlaylistToEvent(me.current_party,100);
-                    } 
-                    //ADD EVENT if visible but has NO dom element
-                    else if ( party.visible == true && party.playlist_el == null) {
-                        var el = me.createEvent(di);
-                        if(party.id < firstIndex){
-                            //insert at beginning
-                            firstIndex = party.id;
-                            el.insertBefore($('.playlist ul li').first());
-                        } else {
-                            //insert after last visible
-                            el.insertAfter(lastVisible);
-                        }
-                        me.movePlaylistToEvent(me.current_party,100);
-                        lastVisible = el;
-                        
+                var el = party.playlist_el;
+                var playing = me.options.data[me.current_party].playlist_el;
+                //don't touch active party
+                if(!el.hasClass('active')){
+                    //check if element is visible and is already shown
+                    if(party.visible == false && !el.hasClass('hidden')){
+                        el.addClass('hidden');
+                    } else 
+                    if(party.visible == true && el.hasClass('hidden')){
+                        el.removeClass('hidden');
                     }
-                    //UPDATE VARIABLES update last visible if party is already visible
-                    if(party.visible = true && party.playlist_el != null){
-                        lastVisible = party.playlist_el;
-                    }
+                    me.options.playlist_container.scrollTop(playing.position().top);
                 }
                 
+            
             });
             
             
@@ -552,24 +501,30 @@
             ev.playlist_el.hover(function(){
                 ev.playlist_el.toggleClass('hovered',250, "swing");
             });
-            var playlist_ul = $('<ul></ul>', {
-                class:'cm_player playlist'
-            }).appendTo(ev.playlist_el);
             
-            jQuery.each(ev.tracks, function(ti, track){
-                var shading;
-                if (ti % 2 == 0){ 
-                    shading = "even"; 
-                } else { 
-                    shading = "odd"; 
-                }
-                var li = $('<li class = "track ' + shading + '" ><span class = "cm_player index">' + (ti+1) + '</span> <span class="cm_player t_title">'+ track.title +'</span> <span class="cm_player artist">' + track.user.username + '</span></li>').appendTo(playlist_ul);
-                li.click(function(){ 
-                    me.goTo(di,ti); 
-                    //li.addClass("active");
-                    });
-                ev.tracks[ti].playlist_el = li;
-            });
+            if(ev.tracks.length <= 0){
+                ev.playlist_el.addClass('no-tracks');
+            } else {
+                //create tracklist
+                var playlist_ul = $('<ul></ul>', {
+                    class:'cm_player playlist'
+                }).appendTo(ev.playlist_el);
+                
+                jQuery.each(ev.tracks, function(ti, track){
+                    var shading;
+                    if (ti % 2 == 0){ 
+                        shading = "even"; 
+                    } else { 
+                        shading = "odd"; 
+                    }
+                    var li = $('<li class = "track ' + shading + '" ><span class = "cm_player index">' + (ti+1) + '</span> <span class="cm_player t_title">'+ track.title +'</span> <span class="cm_player artist">' + track.user.username + '</span></li>').appendTo(playlist_ul);
+                    li.click(function(){ 
+                        me.goTo(di,ti); 
+                        //li.addClass("active");
+                        });
+                    ev.tracks[ti].playlist_el = li;
+                });
+            }
             
             return ev.playlist_el;
         }

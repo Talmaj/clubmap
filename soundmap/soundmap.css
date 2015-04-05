@@ -175,3 +175,7 @@ div.event_info{
 	margin-left:0.9em;
 	margin-bottom:0.5em;
 }
+
+ul.events li.event.no-tracks, ul.events li.event.hidden{
+	display:none;
+}
