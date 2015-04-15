@@ -7,17 +7,30 @@
 
 	<link rel="stylesheet" href="{% static 'events/css/map.css' %}">
 	<!-- move the static part of the script to file -->
-	<script src="{% static 'events/js/gmaps.js' %}"></script>
+
+    <script src="{% static 'events/js/gmaps.js' %}"></script>
+
 	<script> 
 	var map;
+    var miniMarker = {url: "{% static 'events/img/icons/mini_marker.png' %}"}
 	function initialize() {
 		//TODO set varibales like zoom and center global
-		var mapOptions = {
-					zoom: 12,
-					center: new google.maps.LatLng(52.52001, 13.40495)
-		};
+        var MAPTYPE_ID = 'gray_style';
+        var mapOptions = {
+            zoom: 12,
+            center: new google.maps.LatLng(52.52001, 13.40495),
+            disableDefaultUI: true,
+            draggable: true,
+            minZoom: 12,
+            maxZoom: 15,
+            mapTypeControl: false,
+            mapTypeId: MAPTYPE_ID //google.maps.MapTypeId.ROADMAP
+          };
 
 		map = new google.maps.Map(document.getElementById('main_map'),mapOptions);
+        var styledMapOptions = {name: 'Custom Style'};
+        var customMapType = new google.maps.StyledMapType(featureOpts, styledMapOptions);
+        map.mapTypes.set(MAPTYPE_ID, customMapType);
 
 		{% if events %}
 			{% for event in events %}
@@ -25,7 +38,8 @@
 				var marker{{event.id}} = new google.maps.Marker({
 					position: new google.maps.LatLng({{event.location.latitude}},{{event.location.longitude}}),
 					map: map,
-					title: '{{ event.event_name }} @ {{ event.location.location_name }}'
+					title: '{{ event.event_name }} @ {{ event.location.location_name }}',
+                    icon: miniMarker
 				});
 
 				google.maps.event.addListener(marker{{event.id}}, 'click', function() {
