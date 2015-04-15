@@ -3,7 +3,6 @@ MySQL-python==1.2.5
 Pillow==2.2.1
 Pillow-PIL==0.1dev
 South==0.8.2
-distribute==0.7.3
 facebook-sdk==0.4.0
 fudge==1.0.3
 pygeocoder==1.2.1.1

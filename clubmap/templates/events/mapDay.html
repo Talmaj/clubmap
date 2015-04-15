@@ -1,31 +1,37 @@
 {% extends "events/base.html" %}
+{% load staticfiles %}
 
-{% block head_includes %}
+{% block header_include %}
 
-<link rel="stylesheet" href="static/events/css/map.css">
-<script src="https://maps.googleapis.com/maps/api/js?v=3.9"></script>
-
-<script>
-
-var map;
-function initialize() {
-  var mapOptions = {
-    zoom: 8,
-    center: new google.maps.LatLng(-34.397, 150.644)
-  };
-  map = new google.maps.Map(document.getElementById('map-canvas'),
-      mapOptions);
-}
-
-google.maps.event.addDomListener(window, 'load', initialize);
-
-</script>
+        <link rel="stylesheet" href="{% static 'events/css/soundmap.css' %}">
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.9"></script>
+        <script src="https://connect.soundcloud.com/sdk.js"></script>
+        <script src="{% static 'events/js/vendor/waveform.js' %}"></script>
+        <script src="{% static 'events/js/soundmap.js' %}"></script>
 
 {% endblock %}
 
+{% block background %}
+    <div id="loadingOverlay">
+        <div id="info">
+            <h1>Welcome to the Clubmap</h1>
+            <h2 class="ev_count"></h2>
+            <span>collecting sounds <span id="progress">1%</span> </span>
+        </div>
+    </div>
+    <div id="main_map"></div>
+
+{%  endblock %}
 
 {% block main %}
 
-<div id="main_map"></div>
+    <div id="playlist"></div>
+    <div id="event_display"></div>
+
+{% endblock %}
+
+{% block footer %}
+
+    <div id = "player"></div>
 
 {% endblock %}

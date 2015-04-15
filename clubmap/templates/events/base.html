@@ -16,36 +16,42 @@
         <link rel="stylesheet" href="{% static 'events/css/normalize.min.css' %}">
         <link rel="stylesheet" href="{% static 'events/css/main.css' %}">
 
+        <link href='http://fonts.googleapis.com/css?family=Stalemate' rel='stylesheet' type='text/css'>
+
         <script src="{% static 'events/js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
-        <script src="{% static 'events/js/vendor/mootools-core-1.4.5-full-nocompat.js' %}"></script>
-        <script src="https://connect.soundcloud.com/sdk.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+
         {% block header_include %}
         {% endblock %}
         
     </head>
-    <body>
+    <body id="top">
         <!--[if lt IE 7]>
             <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
+        {% block background %}
+        {% endblock %}
 
         <div class="header-container">
             <header class="wrapper clearfix">
             	{% block header %}
-            	<h1>Clubmap</h1>
+            	<h1>The Clubmap</h1>
             	{% endblock %}
             </header>
         </div>
-        
+
+        {% block main %}
         <div class="main-container">
-            {% block background %}
-            {% endblock %}
+
             <div class="main wrapper clearfix">
-            	{% block main %} 
+
                 here goes the maiin content
-            	{% endblock %}            	
+
             </div> <!-- #main -->
         </div> <!-- #main-container -->
-        
+        {% endblock %}
+
         <div class="footer-container">
             <footer class="wrapper">
             	{% block footer %} 
@@ -54,7 +60,6 @@
             </footer>
         </div>
 
-		<script src="{% static 'events/js/main.js' %}"></script>
        <!--
        	<script>
             var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];

@@ -1,4 +1,4 @@
-from scraping import *
+#from scraping import *
 from events.models import *
 
 

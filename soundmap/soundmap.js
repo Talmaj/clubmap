@@ -73,7 +73,7 @@
             var me = this;
             var user_tracks = [];
             var def = [];
-            
+
             //search for best tracks for each user
             jQuery.each(me.options.data, function(data_index, party){
                 party.tracks = [];
