@@ -592,10 +592,8 @@ data = data.slice(0,20);
  */
 
 $(function($) {
-    //console.log( "ready!" );
     //SC.initialize({client_id:'5b3cdaac22afb1d743aed0031918a90f'});
     $('div#info').css('top',$('#loadingOverlay').height()/2);
-
     $.getJSON('http://127.0.0.1:8000/ajax/11/11/2000/',function(data){
         console.log(data);
         sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), data:data.data, playlist_container:$('#playlist'), event_container:$('#event_display') });
