@@ -127,8 +127,10 @@ def save_to_db(container):
         except Exception, e:
             print "an Error happened:"
             print e
+            '''
             save = raw_input("Do you wish to continue? type y for yes anything else for no \n")
             if (save != "y"):
                 return
+            '''
     
     

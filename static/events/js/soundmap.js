@@ -11,6 +11,10 @@
  *  "lat": 52.475866, 
  *  "id": 3}
  **/
+function pad(n) {
+    return (n < 10) ? ("0" + n) : n;
+}
+
 (function ($) {
     $.widget( "cm.scplayer", {
         
@@ -22,12 +26,16 @@
          * artists are given from django
          */
         options: {
+            day:(new Date).getDate(),
+            month:(new Date).getMonth() + 1,
+            year:(new Date).getFullYear(),
             client_id: 0,
             data:[],
             playlist_container: null,
             control_container:null,
             map_container: this.element,
             event_container: null,
+            shuffle:true,
             map_options: {
                 zoom: 12,
                 center: new google.maps.LatLng(52.52001, 13.40495),
@@ -40,11 +48,6 @@
              * Private variables
              * ================
              */
-            
-            //a list with the current playlist based on artists
-            //this.playlist = [];
-            //a list of html elements which represent the playlist in the DOM
-            //this.playlist_el = []
             //current index of playlist
             this.current = 0;
             //current soundManager object
@@ -67,17 +70,78 @@
             this.loadingOverlay = $('#loadingOverlay');
             //number of artists in data
             this.artists_count = 0;
+            //number of tracks in data
+            this.track_count = 0;
             /*=================
              * Constructor
              * ================
              */
-            SC.initialize({client_id:this.options.client_id});
             var me = this;
-            var user_tracks = [];
-            var def = [];
-            var progress = 0;
-            $('#info h2.ev_count').text('we found '+ me.options.data.length + ' events for you');
+            this.loadData(pad(me.options.day), pad(me.options.month), me.options.year).done(function(){
+                if(me.options.data.length <= 0){
+                    console.log("no data to create SC MAP");
+                    return;
+                }
+                SC.initialize({client_id:me.options.client_id});
 
+
+                $('#info').find('h2.ev_count').text('we found '+ me.options.data.length + ' events for you');
+
+                me.fetchTracksAndBuildPlaylist();
+
+                me.createMap();
+            });
+        },
+
+        loadData:function(day,month,year){
+            var me = this;
+            var def = $.Deferred();
+            me.day = day;
+            me.month = month;
+            me.year = year;
+            $.getJSON('ajax/' + day +'/' + month +  '/' + year + '/').done(function(data){
+                me.options.data = data.data;
+                def.resolve({data:data.data});
+            });
+            return def;
+        },
+
+        changeDate:function(day,month,year){
+            var me = this;
+
+
+            //reinit helper variables
+            me.current = 0;
+            me.current_party = 0;
+            if(me.current_sound !== null){
+                me.current_sound.destruct()
+            }
+            me.current_sound = null;
+            me.artist_count = 0;
+            me.track_count = 0;
+
+
+            //reinit all markers
+            jQuery.each(me.options.data, function(id, party){
+               party.marker.setMap(null);
+            });
+
+            //cleaning done get new data
+            me.loadData(day,month,year).done(function(){
+                //fetch new tracks and build new playlist
+                me.playlist_container.empty();
+                me.fetchTracksAndBuildPlaylist();
+                me.createMap();
+
+            });
+
+        },
+
+        fetchTracksAndBuildPlaylist:function(){
+            var me = this;
+            var def = [];
+            var user_tracks = [];
+            var progress = 0;
             //search for best tracks for each user
             jQuery.each(me.options.data, function(data_index, party){
                 party.tracks = [];
@@ -86,7 +150,7 @@
                     var dfd = $.Deferred();
                     //gets all tracks based on user id
                     SC.get("/tracks", {user_id: id}, function (tracks) {
-    
+
                         user_tracks = tracks;
                         try {
                             //sort all tracks
@@ -100,6 +164,7 @@
                             //merge lists faster
 
                             $.merge(party.tracks, user_tracks.slice(0, 3));
+                            me.track_count += user_tracks.length;
                             console.log("done getting tracks");
                         } catch(err){
                             console.log("error getting some tracks");
@@ -114,11 +179,10 @@
             });
 
             $.when.apply($, def).done(function(){
-                me.updateLoadingOverlay('initializing map...');
+                //me.updateLoadingOverlay('initializing map...');
                 me.createUI();
-                me.createMap();
                 me.waveform = new Waveform({
-                    container: $(me.progress)[0],   
+                    container: $(me.progress)[0], //TODO make independent
                     outerColor: "rgba(0,0,0,0)",
                     innerColor:function(x,y){
                         if(1){
@@ -133,9 +197,8 @@
                         return "rgba(0, 0, 0, 0)"
                       }
                 }
-                });             
+                });
             });
-            //me.createUI();
         },
         
         /*
@@ -191,39 +254,44 @@
          */
         next: function () {
             var me = this;
-            var next = me.current + 1;
-            var next_party = me.current_party;
-            
-            if(next >= me.options.data[me.current_party].tracks.length){
-                //go to next party
-                
-                //next_party = next_party+1;
-                do{
-                    next_party = next_party + 1;
-                    if(next_party >= me.options.data.length){
-                        next_party = 0;
-                    }
-                    if (next_party == me.current_party){
-                        break;
-                    }
-                } while (me.options.data[next_party].tracks.length <= 0 || me.options.data[next_party].visible == false);
-                next = 0;
+
+            if(me.options.shuffle !== true) {
+                var next = me.current + 1;
+                var next_party = me.current_party;
+
+                if (next >= me.options.data[me.current_party].tracks.length) {
+                    //go to next party
+
+                    //next_party = next_party+1;
+                    do {
+                        next_party = next_party + 1;
+                        if (next_party >= me.options.data.length) {
+                            next_party = 0;
+                        }
+                        if (next_party == me.current_party) {
+                            break;
+                        }
+                    } while (me.options.data[next_party].tracks.length <= 0 || me.options.data[next_party].visible == false);
+                    next = 0;
+                }
+
+                if (me.current_sound != null) me.current_sound.destruct();
+                me.current_sound = null;
+
+                me.options.data[me.current_party].playlist_el.removeClass("active");
+                me.options.data[me.current_party].tracks[me.current].playlist_el.removeClass("active")
+
+                //If party changed move into the middle of playlist
+                if (me.current_party !== next_party) {
+                    me.movePlaylistToEvent(next_party, 500);
+                }
+
+                me.current = next;
+                me.current_party = next_party;
+                me.play();
+            } else {
+                me.shuffleTrack(0);
             }
-            
-            if(me.current_sound != null) me.current_sound.destruct();
-            me.current_sound = null;
-            
-            me.options.data[me.current_party].playlist_el.removeClass("active");
-            me.options.data[me.current_party].tracks[me.current].playlist_el.removeClass("active")
-            
-            //If party changed move into the middle of playlist
-            if(me.current_party !== next_party) {
-                me.movePlaylistToEvent(next_party,500); 
-            }
-            
-            me.current = next;
-            me.current_party = next_party;
-            me.play();          
         },
         
         goTo:function(pi,ti){
@@ -249,6 +317,30 @@
             
             } else {
                 console.log("ERROR: track index is out of bounds "+pi+', '+ti);
+            }
+        },
+        /**
+         * Recursive function to shuffle tracks
+         * @param recDepth - used to break of recursion when all tracks have been played
+         */
+        shuffleTrack:function(recDepth){
+            var me = this;
+            if(recDepth >= me.track_count){
+                //reset all tracks
+                jQuery.each(me.options.data, function(party){
+                    jQuery.each(party.tracks, function(track){
+                        track.already_shuffled = false;
+                    })
+                });
+                me.shuffleTrack(0);
+            }
+            var pi = Math.floor(Math.random()*(me.options.data.length+1));
+            var ti = Math.floor(Math.random()*(me.options.data[pi].tracks.length+1));
+            if (me.options.data[pi].tracks[ti].already_shuffled === true){
+                me.shuffleTrack(recDepth+1)
+            } else {
+                me.goTo(pi,ti);
+                me.options.data[pi].tracks[ti].already_shuffled = true
             }
         },
         /*
@@ -281,13 +373,19 @@
             if (me.current_sound === null) {
                 //nothin is playing so when stream is ready play new sound
                 console.log(me.current_party, me.current);
-                SC.stream("/tracks/"+me.options.data[me.current_party].tracks[me.current].id,{preferFlash:false, useHTML5Audio:true, whileloading:function(){me.loadingCallback()}, whileplaying:function(){me.updateTimeline();}, onfinish:function(){me.next();}} , function(sound){
-                    me.current_sound = sound;   
-                    me.current_sound.play();
-                    me.playing = true;
-                    me.end.text(me.current_sound.durationEstimate);
-                    me.updateWaveform();
-                });
+                SC.stream("/tracks/"+me.options.data[me.current_party].tracks[me.current].id,{
+                        preferFlash:false,
+                        useHTML5Audio:true,
+                        whileloading:function(){me.loadingCallback()},
+                        whileplaying:function(){me.updateTimeline();},
+                        onfinish:function(){me.next();}} ,
+                    function(sound){
+                        me.current_sound = sound;
+                        me.current_sound.play();
+                        me.playing = true;
+                        me.end.text(me.current_sound.durationEstimate);
+                        me.updateWaveform();
+                    });
                 me.options.data[me.current_party].playlist_el.addClass("active");
                 me.options.data[me.current_party].tracks[me.current].playlist_el.addClass("active");
                 //me.playlist_el[me.current].addClass("active");
@@ -489,14 +587,14 @@
                     //check if element is visible and is already shown
                     if(party.visible == false && !el.hasClass('hidden')){
                         el.addClass('hidden');
-                    } else Counter
-                    if(party.visible == true && el.hasClass('hidden')){
-                        el.removeClass('hidden');
+                    } else {
+                        if (party.visible == true && el.hasClass('hidden')) {
+                            el.removeClass('hidden');
+                        }
                     }
                     me.options.playlist_container.scrollTop(playing.position().top);
                 }
                 
-            
             });
             
             
@@ -558,9 +656,8 @@
             '       <span>collecting sounds <span id = "progress">0%</span> </span>' +
             '   </div>' +
             '</div>').prependTo('#top');
-
-
         },
+
         updateLoadingOverlay: function(di){
             var me = this;
             var el = $('#progress')
@@ -592,15 +689,9 @@ data = data.slice(0,20);
  */
 
 $(function($) {
-    //console.log( "ready!" );
-    //SC.initialize({client_id:'5b3cdaac22afb1d743aed0031918a90f'});
     $('div#info').css('top',$('#loadingOverlay').height()/2);
 
-    $.getJSON('http://127.0.0.1:8000/ajax/11/11/2000/',function(data){
-        console.log(data);
-        sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), data:data.data, playlist_container:$('#playlist'), event_container:$('#event_display') });
-    });
-
+    sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), playlist_container:$('#playlist'), event_container:$('#event_display') });
 
 });
 

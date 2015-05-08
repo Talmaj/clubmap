@@ -45,7 +45,7 @@ SoundMap.js accesses this to build the map and player UI
 TODO make sensitive to entered date. For testing purposes all event in db are returned.
 '''
 def ajaxView(request,day=0,month=0,year=0):
-    event_list = Event.objects.today().order_by('event_date_start');
+    event_list = Event.objects.from_date(datetime.datetime(int(year), int(month), int(day)))
     data = [event.as_dic() for event in event_list]
     return HttpResponse(json.dumps({"data":data}), content_type="application/json")
 

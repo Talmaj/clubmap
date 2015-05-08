@@ -2,7 +2,7 @@ import re
 import urllib2
 import time
 import requests
-#from time import strptime
+#from time import mktime
 import datetime as dt
 
 def get_dc(dy, mn, yr, ai=34):
