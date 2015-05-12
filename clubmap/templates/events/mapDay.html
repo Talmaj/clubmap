@@ -3,7 +3,11 @@
 
 {% block header_include %}
 
+        <script>
+            var miniMarker = {url: "{% static 'events/img/icons/mini_marker.png' %}"}
+        </script>
         <link rel="stylesheet" href="{% static 'events/css/soundmap.css' %}">
+        <link rel="stylesheet" href="{% static 'events/css/map.css' %}">
         <script src="https://maps.googleapis.com/maps/api/js?v=3.9"></script>
         <script src="https://connect.soundcloud.com/sdk.js"></script>
         <script src="{% static 'events/js/vendor/waveform.js' %}"></script>

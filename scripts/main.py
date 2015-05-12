@@ -1,6 +1,10 @@
-#from scraping import *
+from scraping import *
 from events.models import *
+# import pickle
+import pytz
+TEST_PATH = '/Users/Talmaj/Projects'
 
+TIMEZONES = {34: pytz.timezone("Europe/Berlin")}
 
 def main(dy, mn, yr, ai=34, save=True):
     '''
@@ -25,8 +29,11 @@ def main(dy, mn, yr, ai=34, save=True):
         title, attending, start, end, address, post, price, line_up
     '''
     dc = get_dc(dy, mn, yr, ai)
+    # pickling for testing purposes, not to need to scrape all the time
+    # pickle.dump(dc, open(TEST_PATH + '/all_events.pkl', 'w'))
+    # dc = pickle.load(open(TEST_PATH + '/all_events.pkl', 'r'))
     if save:
-        save_to_db(dc)
+        save_to_db(dc, ai)
 
 def main_terminal(dy, mn, yr, ai=34, save=True):
     '''
@@ -56,9 +63,9 @@ def main_terminal(dy, mn, yr, ai=34, save=True):
     if (save == "y"):
         print "saving...."
         save_to_db(dc)
-    
 
-def save_to_db(container):
+
+def save_to_db(container, ai=34):
     '''
     Saves the info in the database
     
@@ -70,55 +77,74 @@ def save_to_db(container):
     '''
     print container
     for dc in container:
-        name=""
+        name = ""
         try:
             #TODO check if already exists
-            #saving location data
-            location = Location(street=dc['address'], postal_code=dc['post'], 
-                                city=dc['city'], location_name=dc['venue'])
-            location.setCoordinates()
-            location.published = True
-            location.postal_code = 0 if location.postal_code == '' else location.postal_code
-            if(Location.objects.filter(location_name=dc['venue'], street=dc['address']).exists()):
+            if Location.objects.filter(location_name=dc['venue'], street=dc['address']).exists():
                 print "location already exists"
-                #might work as long we stay in one city
+                # might work as long we stay in one city
                 location = Location.objects.get(location_name=dc['venue'], street=dc['address'])
             else:
+                # saving location data
+                location = Location(street=dc['address'], postal_code=dc['post'],
+                                    city=dc['city'], location_name=dc['venue'])
+                location.setCoordinates()
+                location.published = True
+                location.postal_code = 0 if location.postal_code == '' else location.postal_code # funny stuff
                 location.save()
-            
-            #saving event data
-            event = Event(event_name=dc['title'], event_date_start=dc['start'], 
-                            event_date_end=dc['end'], price=dc['price'], 
-                            location=location)
+
+            # localizing timezones & other fixes TODO move to scraping script
+            #dc['start'] = TIMEZONES[ai].localize(dc['start'])
+            #dc['end'] = TIMEZONES[ai].localize(dc['end'])
+            dc['title'] = dc['title'].strip(u'\U0001f4e3').strip()
+
+            # saving event data
+            event = Event(event_name=dc['title'], event_date_start=dc['start'],
+                            event_date_end=dc['end'], price=dc['price'],
+                            location=location, ra_id=dc['ra_id'], gay=False)
             event.published = True
-            event.gay = False
+
 
             if(Event.objects.filter(event_date_start=dc['start'], event_name = dc['title']).exists()):
                 print "event already exists in db";
-                event = Event.objects.get(event_date_start=dc['start'], event_name = dc['title']);
+                event = Event.objects.get(event_date_start=dc['start'], event_name=dc['title']);
             else:
                 event.save()
-            
-            #TODO check if already exists
-            #saving artists data
+
+            # temp
+            if dc['line_up']:
+                dc['line_up'] = clean_lineup(dc['line_up'])
+            # TODO check if already exists
+            # saving artists data
             for performer in dc['line_up']:
+
+                # TODO better clean the line up so that it does not contain None and nan
+                if (performer is None) or (type(performer) == float):
+                    continue
+
                 artist = Artist(name=performer, ignore_sc=False)
                 name = performer
-                if (artist.get_sc_id() != None):
-                    print "sc_id=" + artist.soundcloud_id
-                    if (Artist.objects.filter(soundcloud_id=artist.soundcloud_id).exists()):
-                        #artist already exists so to link the event we use the existing one
-                        artist = Artist.objects.get(soundcloud_id = artist.soundcloud_id)
+
+                if Artist.objects.filter(name=performer).exists():
+                    print performer
+                    artist = Artist.objects.get(name=performer)
+                # if name in aristsnames retrieve the sc_id: arists.soundcloud_id = id
+                elif artist.get_sc_id() != None:
+                    print "sc_id=" + str(artist.soundcloud_id)
+                    if Artist.objects.filter(soundcloud_id=artist.soundcloud_id).exists():
+                        # artist already exists so to link the event we use the existing one
+                        artist = Artist.objects.get(soundcloud_id=artist.soundcloud_id)
                     else:
-                        #sc id is not in database add artist
+                        # sc id is not in database add artist
                         artist.save()
                 else:
                     #we don't have a sc_id check by name
                     if(Artist.objects.filter(name = artist.name).exists()):
-                        artist = Artist.objects.get(name = artist.name)
+                        artist = Artist.objects.get(name=artist.name)
                     else:
+                        print artist.name
                         artist.save()
-                
+
                 event.artists.add(artist)
         except RuntimeError, e:
             print e
@@ -132,5 +158,7 @@ def save_to_db(container):
             if (save != "y"):
                 return
             '''
+
     
-    
+if __name__ == '__main__':
+    main(1,2,3)

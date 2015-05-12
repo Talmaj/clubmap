@@ -2,17 +2,33 @@
 
 from django.db import models
 import time
-import soundcloud 
+import soundcloud
 from collections import Counter
-from pygeocoder import Geocoder
+from pygeocoder import Geocoder, GeocoderError
 from django.db.models import Q
 import datetime
+from fuzzywuzzy.fuzz import ratio
+from requests import HTTPError
 
 client = soundcloud.Client(client_id='5b3cdaac22afb1d743aed0031918a90f')
 
+
+def client_get(args, **kwargs):
+    try:
+        request = client.get(args, **kwargs)
+    except TypeError, e:
+        print e
+        request = client_get(args, **kwargs)
+    except HTTPError, e:
+        print e
+        time.sleep(1)
+        request = client_get(args, **kwargs)
+    return request
+
+
 #Search artists tracks and return his most used genre
 def determineGenre(client,sc_id):
-    tracks = client.get('users/'+str(sc_id)+'/tracks')
+    tracks = client_get('users/'+str(sc_id)+'/tracks')
     if not tracks: return '' # if there are no tracks
 
     _list = []
@@ -34,30 +50,54 @@ class Artist(models.Model):
     soundcloud_id = models.PositiveIntegerField(null=True,unique=True)
     genres = models.ManyToManyField('Genre',null=True,blank=True)
     ignore_sc = models.BooleanField('Ignore Soundcloud')
-    
+
     def __unicode__(self):
         return 'Artist[ ' + self.name + ', @: ' + self.label + ', ' + str(self.soundcloud_id) + ' ]'
     def get_sc_id(self):
-        #try:
-        user = client.get('/users', q=self.name)
-        #if user is not emtpy assign data
-        if(len(user)!=0):
-            user = user[0]
+
+        users = client_get('/users', q=self.name)
+        '''
+        try:
+            users = client.get('/users', q=self.name)
+        except TypeError, e:
+            print e
+            users = client.get('/users', q=self.name)
+        except HTTPError, e:
+            print e
+            time.sleep(1)
+            users = client.get('/users', q=self.name)
+        '''
+        # if user is not emtpy assign data
+        if len(users) != 0:
+            try:
+                print self.name.lower()
+            except:
+                print self.name, type(self.name)
+                raise AttributeError
+            best_match = filter(lambda user: ratio(self.name.lower(), user.username.lower()) >= 80, users)
+            if len(best_match):
+                user = best_match[0]
+                if len(best_match) > 1:
+                    print ', '.join([x.username for x in best_match]), 'more than one very good match to', self.name
+            else:
+                user = users[0]
+
             if not(user.website_title == None): self.label = user.website_title
             self.soundcloud_id = user.id
-            
-            artist_genre = determineGenre(client,user.id)
+
+            artist_genre = determineGenre(client, user.id)
             try:
                 #get id corresponding to genre
                 Genre_artist = Genre.objects.get(genre_name=artist_genre)
                 #and save it
                 self.genre = Genre_artist.id
-                
+
             except Exception, e:
                     #Add Genre to unkown Genres TODO: this is not working quite right yet
                     print "genre not found {}".format(artist_genre)
                     unkown = unkownGenre(name=artist_genre, soundcloud_id=user.id)
                     unkown.save()
+            return self.soundcloud_id
         else:
             return None;
 '''
@@ -72,7 +112,7 @@ TODO:
 class Genre(models.Model):
     genre_name = models.CharField(max_length=200,unique=True)
     parent_id = models.ManyToManyField('self')
-    
+
     def __unicode__(self):
         parent = Genre.object.get(id = self.parent_id)
         return 'Genre[ ' + self.genre_name + ', parent: ' + parent.genre_name + ' ]'
@@ -81,7 +121,7 @@ class Genre(models.Model):
 Event Model
 TODO:
 -File uploads not working 
-'''  
+'''
 class EventManager(models.Manager):
     '''
     Today's events
@@ -126,7 +166,7 @@ class EventManager(models.Manager):
             while(monday.weekday() != 0):
                 monday += datetime.timedelta(days=1)
             monday += datetime.timedelta(hours=12)
-            start = datetime.datetime.now() 
+            start = datetime.datetime.now()
             return self.from_range(start, monday)
 
 
@@ -143,16 +183,16 @@ class EventManager(models.Manager):
 
 
 class Event(models.Model):
-    
+
     #File gets validated by ImageField if uploaded through backend upload using script must handle validation itself
     def get_image_path(instance, filename):
         sec = str(time.time()).split('.')[0]
         path = '/img/events/%Y/%m/' + sec + '_' + filename
         return path
-    
+
     event_name = models.CharField(max_length=200)
     description = models.TextField(blank = True)
-    
+
     event_date_start = models.DateTimeField('date and time event starts')
     event_date_end = models.DateTimeField('date and time event ends')
     pub_date = models.DateTimeField('dateime when event was added to database',auto_now_add=True)
@@ -187,7 +227,7 @@ class Event(models.Model):
     #could use some more love
     def __unicode__(self):
         return 'Event[ ' + self.event_name + ', ' + 'startdate' + ' ]'
-    
+
 
 class Location(models.Model):
     '''
@@ -198,7 +238,7 @@ class Location(models.Model):
     SLOVENIA = 'SI'
     NETHERLANDS = 'SL'
     UNITEDKINGDOM = 'UK'
-    
+
     COUNTRYS = (
                 (GERMANY, 'Deutschland'),
                 #(AUSTRIA, 'Österreich'),
@@ -206,12 +246,12 @@ class Location(models.Model):
                 #(NETHERLANDS, 'Nederland'),
                 #(UNITEDKINGDOM, 'Great Britian'),
                 )
-    
+
     def get_image_path(instance, filename):
         sec = str(time.time()).split('.')[0]
         path = '/img/'+ instance.location_name +'/%Y/%m/' + sec + '_' + filename
         return path
-    
+
     pub_date = models.DateTimeField('dateime location was added to database',auto_now_add=True)
 
     location_name = models.CharField(max_length=200)
@@ -225,14 +265,14 @@ class Location(models.Model):
     postal_code = models.PositiveIntegerField()
     city = models.CharField(max_length=200)
     country_code = models.CharField('state', max_length=2, choices = COUNTRYS, default = GERMANY)
-    
+
     image = models.ImageField(upload_to ='events/img/' ,blank=True)
 
     fb_id = models.PositiveIntegerField(unique=True, null=True)
     ra_id = models.PositiveIntegerField(unique=True, null=True)
-    
+
     published = models.BooleanField('Published')
-    
+
     def setAddress(self, street, postal_code, location_name):
         ## this can be deleted
         '''
@@ -244,10 +284,19 @@ class Location(models.Model):
 
     def __unicode__(self):
         return 'Location[ ' + self.location_name + ', ' + ' coordinates: (' + str(self.latitude) + ', ' + str(self.longitude) + ') ]'
-    
+
     def setCoordinates(self):
         address = self.street + ', ' + self.postal_code + ' ' + self.city
-        self.latitude, self.longitude = Geocoder.geocode(address).coordinates
+        print address
+        try:
+            self.latitude, self.longitude = Geocoder.geocode(address).coordinates
+        except GeocoderError, exception:
+            print exception
+            if exception == 'Error ZERO_RESULTS':
+                self.latitude, self.longitude = 0, 0  # TODO what then?
+            elif exception == 'OVER_QUERY_LIMIT':
+                time.sleep(2)
+                self.latitude, self.longitude = Geocoder.geocode(address).coordinates
 
 '''
 Name Abstraction Class will be used for machine learning
@@ -256,8 +305,8 @@ Move this to artist??
 class ArtistNames(models.Model):
     name = models.CharField(max_length=200)
     artist = models.ForeignKey(Artist)
-    
-    
+
+
     def __unicode__(self):
         artistRef = Artist.object.get(id = self.artist)
         return 'NameAbstraction[ ' + self.name + '-->' + artistsRef.name + ' ]'

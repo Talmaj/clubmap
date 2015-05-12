@@ -4,18 +4,35 @@ import time
 import requests
 #from time import mktime
 import datetime as dt
+# import pickle
+from lineup_extractor import clean_lineup
+import os
+import pytz
+
+# TEST_PATH = '/Users/Talmaj/Projects/TESTING'
+
+TIMEZONES = {34: pytz.timezone("Europe/Berlin")}
 
 def get_dc(dy, mn, yr, ai=34):
     '''
-    Returns the list of the dictionaries with events from all the scraped data from RA.
+    Returns a list of the dictionaries with events from all the scraped data from RA.
     '''
     events = get_events(dy,mn,yr,ai)
-    dc = []
+    # events = [re.findall('\d+', x)[0] for x in os.listdir(TEST_PATH)[1:]]
+    list_of_events = []
+    # i = 0
     for event in events:
         html = get_html(event)
+        # pickling  used for testing purposes, so that we avoid constant scraping
+        # pickle.dump(html, open(TEST_PATH + '/event_{0}.pkl'.format(event), 'w'))
+        # html = pickle.load(open(TEST_PATH + '/event_{0}.pkl'.format(event)))
         attr = find_attributes(html)
-        dc += [clean_attributes(attr)]
-    return dc
+        event_info = clean_attributes(attr)
+        event_info['ra_id'] = event
+        list_of_events += [event_info]
+        # i += 1
+        print len(events) - len(list_of_events), 'events to go'
+    return list_of_events
 
 def print_dc(dc):
     for event in dc:
@@ -156,7 +173,7 @@ def clean_attributes(attr):
     dc['start'], dc['end'] = _get_times(attr[2])
     dc['address'], dc['post'], dc['city'] = _get_address(attr[3])
     dc['price'] = _money_parser(attr[4])
-    dc['line_up'] =  _get_line_up(attr[5])
+    dc['line_up'] = clean_lineup(attr[5]) # _get_line_up(attr[5]) # old
     
     return dc
 
@@ -205,7 +222,11 @@ def _get_times(date):
     if end < start:
         delta = dt.timedelta(days=1)
         end = end + delta
-    
+
+    # TODO implement till the end
+    # start = TIMEZONES[ai].localize(start)
+    # end = TIMEZONES[ai].localize(end)
+
     return start, end
 
 def _clean_title(title):

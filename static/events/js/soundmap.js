@@ -16,6 +16,9 @@ function pad(n) {
 }
 
 (function ($) {
+
+    var MAPTYPE_ID = 'gray_style';
+
     $.widget( "cm.scplayer", {
         
         /* ==================
@@ -39,7 +42,7 @@ function pad(n) {
             map_options: {
                 zoom: 12,
                 center: new google.maps.LatLng(52.52001, 13.40495),
-                mapTypeId: google.maps.MapTypeId.HYBRID
+                mapTypeId: MAPTYPE_ID//google.maps.MapTypeId.HYBRID
             }
         },
 
@@ -423,6 +426,9 @@ function pad(n) {
             
             var me = this;
             me.map = new google.maps.Map(document.getElementById('main_map'), me.options.map_options);
+            var styledMapOptions = {name: 'Custom Style'};
+            var customMapType = new google.maps.StyledMapType(featureOpts, styledMapOptions);
+            me.map.mapTypes.set(MAPTYPE_ID, customMapType);
             
             google.maps.event.addListener(me.map, 'bounds_changed',function(){
                 me.updatePlaylist();
@@ -438,7 +444,8 @@ function pad(n) {
                 party.marker = new google.maps.Marker({
                     position: new google.maps.LatLng(party.lat, party.long),
                     map: me.map,
-                    title: party.name + ' @ ' + party.location
+                    title: party.name + ' @ ' + party.location,
+                    icon: miniMarker
                 });
                 
                 //add behaviour to marker
@@ -691,7 +698,6 @@ var sc;
 
 $(function($) {
     $('div#info').css('top',$('#loadingOverlay').height()/2);
-
     sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), playlist_container:$('#playlist'), event_container:$('#event_display') });
 
 });
