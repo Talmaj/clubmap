@@ -12,6 +12,9 @@
  *  "id": 3}
  **/
 (function ($) {
+
+    var MAPTYPE_ID = 'gray_style';
+
     $.widget( "cm.scplayer", {
         
         /* ==================
@@ -31,7 +34,7 @@
             map_options: {
                 zoom: 12,
                 center: new google.maps.LatLng(52.52001, 13.40495),
-                mapTypeId: google.maps.MapTypeId.HYBRID
+                mapTypeId: MAPTYPE_ID//google.maps.MapTypeId.HYBRID
             }
         },
 
@@ -325,6 +328,9 @@
             
             var me = this;
             me.map = new google.maps.Map(document.getElementById('main_map'), me.options.map_options);
+            var styledMapOptions = {name: 'Custom Style'};
+            var customMapType = new google.maps.StyledMapType(featureOpts, styledMapOptions);
+            me.map.mapTypes.set(MAPTYPE_ID, customMapType);
             
             google.maps.event.addListener(me.map, 'bounds_changed',function(){
                 me.updatePlaylist();
@@ -340,7 +346,8 @@
                 party.marker = new google.maps.Marker({
                     position: new google.maps.LatLng(party.lat, party.long),
                     map: me.map,
-                    title: party.name + ' @ ' + party.location
+                    title: party.name + ' @ ' + party.location,
+                    icon: miniMarker
                 });
                 
                 //add behaviour to marker
@@ -596,7 +603,7 @@ $(function($) {
     //SC.initialize({client_id:'5b3cdaac22afb1d743aed0031918a90f'});
     $('div#info').css('top',$('#loadingOverlay').height()/2);
 
-    $.getJSON('http://127.0.0.1:8000/ajax/11/11/2000/',function(data){
+    $.getJSON('http://127.0.0.1:8000/ajax/13/05/2015/',function(data){
         console.log(data);
         sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), data:data.data, playlist_container:$('#playlist'), event_container:$('#event_display') });
     });

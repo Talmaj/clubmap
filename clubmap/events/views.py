@@ -22,9 +22,9 @@ index page is configured to show a today event view. Context data is obsolet as 
 '''
 def index(request):
     context = RequestContext(request)
-    event_list = Event.objects.order_by('event_date_start');
+    event_list = Event.objects.order_by('event_date_start')
     event_list = set_times(event_list) 
-    context_dic = {'events':event_list}
+    context_dic = {'events': event_list}
     return render_to_response('events/mapDay.html', context_dic, context)
 
 '''
@@ -33,10 +33,14 @@ not sure if any context data will be needed as all data will be fetched from jav
 '''
 def mapView(request,day=0,month=0,year=0):
     context = RequestContext(request)
-    event_list = Event.objects.order_by('event_date_start');
-    event_list = set_times(event_list) 
-    context_dic = {'events':event_list}
-    return render_to_response('events/map_view.html', context_dic, context)
+    #event_list = Event.objects.order_by('event_date_start');
+    #event_list = Event.objects.filter(event_date_start__year=year, event_date_start__month=month)#,
+    #                                  #event_date_start__day=day)
+    event_list = Event.objects.filter(event_date_start__range=["%s-%s-%s" % (year, month, day),
+                                                               "%s-%s-%s" % (year, month, int(day)+1)])
+    event_list = set_times(event_list)
+    context_dic = {'events': event_list}
+    return render_to_response('events/mapDay.html', context_dic, context)
 
 '''
 Returns a JSON data object containing all events with their artists locations and corresponding markers
@@ -45,9 +49,11 @@ SoundMap.js accesses this to build the map and player UI
 TODO make sensitive to entered date. For testing purposes all event in db are returned.
 '''
 def ajaxView(request,day=0,month=0,year=0):
-    event_list = Event.objects.today().order_by('event_date_start');
+    #event_list = Event.objects.all()#.today().order_by('event_date_start');
+    event_list = Event.objects.filter(event_date_start__range=["%s-%s-%s" % (year, month, day),
+                                                               "%s-%s-%s" % (year, month, int(day)+1)])
     data = [event.as_dic() for event in event_list]
-    return HttpResponse(json.dumps({"data":data}), content_type="application/json")
+    return HttpResponse(json.dumps({"data": data}), content_type="application/json")
 
 '''
 Generates necessary HTML to render a single event
