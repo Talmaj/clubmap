@@ -699,6 +699,5 @@ var sc;
 $(function($) {
     $('div#info').css('top',$('#loadingOverlay').height()/2);
     sc = $('body').scplayer({ client_id:'5b3cdaac22afb1d743aed0031918a90f',control_container:$('#player'), map_container:$('body'), playlist_container:$('#playlist'), event_container:$('#event_display') });
-
 });
 

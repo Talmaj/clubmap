@@ -1,0 +1,11 @@
+{% extends "events/base.html" %}
+{% load staticfiles %}
+
+{% block main %}
+<p>
+<a href="{% url 'social:begin' 'facebook' %}">Log-in with Facebook account</a>
+</p>
+<p>
+<a href="{% url 'social:begin' 'soundcloud' %}">Log-in with SoundCloud account</a>
+</p>
+{% endblock %}
